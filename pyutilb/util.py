@@ -7,7 +7,10 @@ import re
 import os
 import random
 from jsonpath import jsonpath
-from selenium.webdriver.common.by import By
+try:
+    from selenium.webdriver.common.by import By
+except ImportError:
+    print('未安装selenium, 请不要使用方法 type2by()')
 
 # 写文本文件
 def write_file(path, content, append = False):

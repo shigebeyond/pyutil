@@ -4,7 +4,7 @@ from . import ocr_youdao
 from . import ocr_baidu
 
 __author__ = "shigebeyond"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __description__ = "pyutilb: python common util code"
 
 __all__ = [

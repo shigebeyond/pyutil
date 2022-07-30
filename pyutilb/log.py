@@ -18,20 +18,22 @@ def executor():
     return _executor
 
 # 异步日志
-def debug(msg, *args):
-    executor().submit(logger.debug, msg, *args)
+def debug(msg, *args, **kwargs):
+    executor().submit(logger.debug, msg, *args, **kwargs)
 
-def info(msg, *args):
-    executor().submit(logger.info, msg, *args)
+def info(msg, *args, **kwargs):
+    executor().submit(logger.info, msg, *args, **kwargs)
 
-def warning(msg, *args):
-    executor().submit(logger.warning, msg, *args)
+def warning(msg, *args, **kwargs):
+    executor().submit(logger.warning, msg, *args, **kwargs)
 
-def error(msg, *args):
-    executor().submit(logger.error, msg, *args)
+def error(msg, *args, **kwargs):
+    executor().submit(logger.error, msg, *args, **kwargs)
 
-def critical(msg, *args):
-    executor().submit(logger.critical, msg, *args)
+def critical(msg, *args, **kwargs):
+    executor().submit(logger.critical, msg, *args, **kwargs)
 
 if __name__ == '__main__':
     debug("hello")
+    error("err", exc_info = Exception('unknow err'))
+    logger.error("err", exc_info = Exception('unknow err'))
