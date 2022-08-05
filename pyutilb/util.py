@@ -7,6 +7,7 @@ import re
 import os
 import random
 from jsonpath import jsonpath
+import requests
 try:
     from selenium.webdriver.common.by import By
 except ImportError:
@@ -40,12 +41,21 @@ def read_byte_file(path):
     with open(path, 'rb') as file:
         return file.read()
 
+# 读http文件内容
+def read_http_file(url):
+    res = requests.get(url)
+    # return res.content.decode("utf-8")
+    return res.text
+
 # 读yaml配置
-# :param yaml_file (步骤配置的)yaml文件
+# :param yaml_file (步骤配置的)yaml文件，支持本地文件与http文件
 def read_yaml(yaml_file):
-    if not os.path.exists(yaml_file):
-        raise Exception(f"没找到步骤配置文件: {yaml_file}")
-    txt = read_file(yaml_file)
+    if yaml_file.startswith('https://') or yaml_file.startswith('http://'):
+        txt = read_http_file(yaml_file)
+    else:
+        if not os.path.exists(yaml_file):
+            raise Exception(f"没找到步骤配置文件: {yaml_file}")
+        txt = read_file(yaml_file)
     return yaml.load(txt, Loader=yaml.FullLoader)
 
 # 输出异常
