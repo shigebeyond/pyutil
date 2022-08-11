@@ -1,6 +1,17 @@
 import logging
 import logging.config
 import concurrent.futures
+from configparser import ConfigParser
+import platform
+
+# window下改写 ConfigParser.read(): fix 由于编码不一致而导致 pyutilb\logging.conf 读取失败bug
+if platform.system().lower() == 'windows':
+    read1 = ConfigParser.read
+    def read2(self, filenames, encoding=None):
+        if 'pyutilb\logging.conf' in filenames and encoding == None:
+            encoding = 'utf-8'
+        return read1(self, filenames, encoding)
+    ConfigParser.read = read2
 
 # 应用log配合着
 conf = __file__.replace("log.py", "logging.conf")
