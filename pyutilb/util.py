@@ -6,6 +6,7 @@ import yaml
 import re
 import os
 import random
+import json
 from jsonpath import jsonpath
 import requests
 try:
@@ -50,13 +51,25 @@ def read_http_file(url):
 # 读yaml配置
 # :param yaml_file (步骤配置的)yaml文件，支持本地文件与http文件
 def read_yaml(yaml_file):
-    if yaml_file.startswith('https://') or yaml_file.startswith('http://'):
-        txt = read_http_file(yaml_file)
-    else:
-        if not os.path.exists(yaml_file):
-            raise Exception(f"没找到步骤配置文件: {yaml_file}")
-        txt = read_file(yaml_file)
+    txt = read_local_or_http_file(yaml_file)
     return yaml.load(txt, Loader=yaml.FullLoader)
+
+# 读yaml配置
+# :param json_file (步骤配置的)json文件，支持本地文件与http文件
+def read_json(json_file):
+    txt = read_local_or_http_file(json_file)
+    return json.loads(txt)
+
+# 本地文件或http文件
+def read_local_or_http_file(file):
+    if file.startswith('https://') or file.startswith('http://'):
+        txt = read_http_file(file)
+    else:
+        if not os.path.exists(file):
+            raise Exception(f"没找到步骤配置文件: {file}")
+        txt = read_file(file)
+    return txt
+
 
 # 输出异常
 def print_exception(ex):
