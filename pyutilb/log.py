@@ -8,7 +8,7 @@ import platform
 if platform.system().lower() == 'windows':
     read1 = ConfigParser.read
     def read2(self, filenames, encoding=None):
-        if 'pyutilb\logging.conf' in filenames and encoding == None:
+        if 'pyutilb\logging.conf' in filenames:
             encoding = 'utf-8'
         return read1(self, filenames, encoding)
     ConfigParser.read = read2
