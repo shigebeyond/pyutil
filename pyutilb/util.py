@@ -227,3 +227,26 @@ def type2by(type):
         return By.CLASS_NAME
 
     raise Exception(f"不支持查找类型: {type}")
+
+# 分离xpath与属性
+def split_xpath_and_prop(path):
+    # 检查xpath是否最后有属性
+    mat = re.search('/@[\w\d_-]+$', path)
+    prop = ''
+    if (mat != None):  # 有属性
+        # 分离元素path+属性
+        prop = mat.group()
+        path = path.replace(prop, '')
+        prop = prop.replace('/@', '')
+    return path, prop
+
+# 分离css选择器与属性, 如 a::attr(href)
+def split_css_and_prop(path):
+    # 检查css选择器是否最后有属性
+    mat = re.search('::attr\(([\w\d_-]+)\)$', path)
+    prop = ''
+    if (mat != None):  # 有属性
+        # 分离元素css选择器+属性
+        path = path.replace(mat.group(), '')
+        prop = mat.group(1)
+    return path, prop
