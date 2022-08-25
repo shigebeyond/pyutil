@@ -1,18 +1,17 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import time
 import yaml
 import re
 import os
+import sys
 import random
 import json
 from jsonpath import jsonpath
 import requests
-try:
-    from selenium.webdriver.common.by import By
-except ImportError:
-    print('未安装selenium, 请不要使用方法 type2by()')
+from optparse import OptionParser
+import query_string
 
 # 写文本文件
 def write_file(path, content, append = False):
@@ -211,30 +210,6 @@ def parse_and_call_func(expr):
     # 调用函数
     return funcs[func](param)
 
-# 类型转by
-def type2by(type):
-    if type == 'id':
-        return By.ID
-    if type == 'name':
-        return By.NAME
-    if type == 'css':
-        return By.CSS_SELECTOR
-    if type == 'xpath':
-        return By.XPATH
-    if type == 'tag':
-        return By.TAG_NAME
-    if type == 'link_text': # 精确匹配<a>的全部文本
-        return By.LINK_TEXT
-    if type == 'partial_link_text': # 匹配<a>的部分文本
-        return By.PARTIAL_LINK_TEXT
-    # app
-    if type == 'aid':
-        return By.ACCESSIBILITY_ID
-    if type == 'class':
-        return By.CLASS_NAME
-
-    raise Exception(f"不支持查找类型: {type}")
-
 # 分离xpath与属性
 def split_xpath_and_prop(path):
     # 检查xpath是否最后有属性
@@ -257,3 +232,81 @@ def split_css_and_prop(path):
         path = path.replace(mat.group(), '')
         prop = mat.group(1)
     return path, prop
+
+# 读 __init__ 文件中的元数据：author/version/description
+def read_init_file_meta(init_file):
+    with open(init_file, 'rb') as f:
+        text = f.read().decode('utf-8')
+        items = re.findall(r'__(\w+)__ = "(.+)"', text)
+        meta = dict(items)
+        return meta
+
+# 解析命令的选项与参数
+# :param name 命令名
+# :param version 版本
+# :return 命令参数
+def parse_cmd(name, version):
+    # py文件外的参数
+    args = sys.argv[1:]
+
+    usage = f'Usage: {name} [options...] <yaml_file1> <yaml_file2> <yaml_dir1> <yaml_dir2> ...'
+    optParser = OptionParser(usage)
+
+    # 添加选项规则
+    # optParser.add_option("-h", "--help", dest="help", action="store_true") # 默认自带help
+    optParser.add_option('-v', '--version', dest='version', action="store_true", help = 'Show version number and quit')
+    optParser.add_option("-d", "--data", dest="data", type="string", help="set variable data, eg: a=1&b=2")
+
+    # 解析选项
+    option, args = optParser.parse_args(args)
+
+    # 输出帮助文档 -- 默认自带help
+    # if option.help == True:
+    #     print(usage)
+    #     sys.exit(1)
+
+    # 输出版本
+    if option.version == True:
+        print(version)
+        sys.exit(1)
+
+    # 更新变量
+    if option.data != None:
+        data = query_string.parse(option.data)
+        bvars.update(data)
+
+    # print(option)
+    # print(args)
+    return args
+
+# 类型转by
+def type2by(type):
+    try:
+        from selenium.webdriver.common.by import By
+    except ImportError:
+        print('未安装selenium, 请不要使用方法 type2by()')
+
+    if type == 'id':
+        return By.ID
+    if type == 'name':
+        return By.NAME
+    if type == 'css':
+        return By.CSS_SELECTOR
+    if type == 'xpath':
+        return By.XPATH
+    if type == 'tag':
+        return By.TAG_NAME
+    if type == 'link_text': # 精确匹配<a>的全部文本
+        return By.LINK_TEXT
+    if type == 'partial_link_text': # 匹配<a>的部分文本
+        return By.PARTIAL_LINK_TEXT
+    # app
+    if type == 'aid':
+        return By.ACCESSIBILITY_ID
+    if type == 'class':
+        return By.CLASS_NAME
+
+    raise Exception(f"不支持查找类型: {type}")
+
+# if __name__ == '__main__':
+#     parse_cmd('test', '1.0.0')
