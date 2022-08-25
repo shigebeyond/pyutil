@@ -66,7 +66,7 @@ def read_local_or_http_file(file):
         txt = read_http_file(file)
     else:
         if not os.path.exists(file):
-            raise Exception(f"没找到步骤配置文件: {file}")
+            raise Exception(f"没找到文件: {file}")
         txt = read_file(file)
     return txt
 
@@ -111,7 +111,14 @@ def set_var(name, val):
     bvars[name] = val
 
 # 获取变量
-def get_var(name):
+# :param name 变量名
+# :param throw_key_exception 当变量不存在，是否抛异常
+def get_var(name, throw_key_exception = True):
+    if name not in bvars:
+        if throw_key_exception:
+            raise Exception(f'不存在变量: {name}')
+        return None
+
     return bvars[name]
 
 # 替换变量： 将 $变量名 或 ${变量表达式} 替换为 变量值
@@ -177,7 +184,7 @@ def analyze_var_expr(expr):
     if '.' in expr:  # 有多级属性, 如 data.msg
         return jsonpath(bvars, '$.' + expr)[0]
 
-    return bvars[expr]
+    return get_var(expr)
 
 
 # 替换变量时用到的内部函数
