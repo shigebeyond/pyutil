@@ -12,6 +12,7 @@ from jsonpath import jsonpath
 import requests
 from optparse import OptionParser
 import query_string
+from pyutilb.module_loader import load_module_funs
 
 # 写文本文件
 def write_file(path, content, append = False):
@@ -186,12 +187,15 @@ def analyze_var_expr(expr):
     return get_var(expr)
 
 
-# 替换变量时用到的内部函数
-funcs = {
+# 替换变量时用到的函数
+# 系统函数
+sys_funcs = {
     'random_str': random_str,
     'random_int': random_int,
     'incr': incr
 }
+# 自定义函数, 通过 -c 注入的外部python文件定义的函数
+custom_funs = {}
 
 # 解析并调用函数
 def parse_and_call_func(expr):
@@ -199,16 +203,21 @@ def parse_and_call_func(expr):
     if mat == None:
         raise Exception("不符合函数调用语法: " + expr)
 
-    # 函数名
-    func = mat.group(1)
-    if func not in funcs:
-        raise Exception(f'无效校验函数: {func}')
+    func = mat.group(1) # 函数名
+    param = mat.group(2) # 函数参数
 
-    # 函数参数
-    param = mat.group(2)
+    return call_func(func, param)
 
+# 调用函数
+def call_func(name, param):
+    if name in sys_funcs:
+        func = sys_funcs[name]
+    elif name in custom_funs:
+        func = custom_funs[name]
+    else:
+        raise Exception(f'无效函数: {name}')
     # 调用函数
-    return funcs[func](param)
+    return func(param)
 
 # 分离xpath与属性
 def split_xpath_and_prop(path):
@@ -256,6 +265,7 @@ def parse_cmd(name, version):
     # optParser.add_option("-h", "--help", dest="help", action="store_true") # 默认自带help
     optParser.add_option('-v', '--version', dest='version', action="store_true", help = 'Show version number and quit')
     optParser.add_option("-d", "--data", dest="data", type="string", help="set variable data, eg: a=1&b=2")
+    optParser.add_option("-f", "--f", dest="funs", type="string", help="set custom functions file, eg: cf.py")
 
     # 解析选项
     option, args = optParser.parse_args(args)
@@ -274,6 +284,11 @@ def parse_cmd(name, version):
     if option.data != None:
         data = query_string.parse(option.data)
         bvars.update(data)
+
+    # 加载自定义函数
+    if option.funs != None:
+        global custom_funs
+        custom_funs = load_module_funs(option.funs)
 
     # print(option)
     # print(args)
@@ -307,6 +322,3 @@ def type2by(type):
         return By.CLASS_NAME
 
     raise Exception(f"不支持查找类型: {type}")
-
-# if __name__ == '__main__':
-#     parse_cmd('test', '1.0.0')
