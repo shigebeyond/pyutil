@@ -64,7 +64,7 @@ def recognize_text(file):
     response = do_request(data)
     result = response.json()
     if int(result['errorCode']) > 0:
-        raise Exception(f"调用有道orc接口错误: {result}")
+        raise Exception(f"Fail to call youdao-orc api: {result}")
 
     return result['Result']['regions'][0]['lines'][0]['text']
 

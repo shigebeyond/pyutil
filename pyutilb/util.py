@@ -66,14 +66,14 @@ def read_local_or_http_file(file):
         txt = read_http_file(file)
     else:
         if not os.path.exists(file):
-            raise Exception(f"没找到文件: {file}")
+            raise Exception(f"File not found: {file}")
         txt = read_file(file)
     return txt
 
 
 # 输出异常
 def print_exception(ex):
-    print('\033[31m发生异常: ' + str(ex) + '\033[0m')
+    print('\033[31mException occurs: ' + str(ex) + '\033[0m')
 
 # 生成一个指定长度的随机字符串
 def random_str(n):
@@ -116,7 +116,7 @@ def set_var(name, val):
 def get_var(name, throw_key_exception = True):
     if name not in bvars:
         if throw_key_exception:
-            raise Exception(f'不存在变量: {name}')
+            raise Exception(f'Variable not exist: {name}')
         return None
 
     return bvars[name]
@@ -148,7 +148,7 @@ def replace_var(txt, to_str = True):
 # :param txt 是否转为字符串, 否则原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量; 只针对整体匹配的情况
 def do_replace_var(txt, to_str = True):
     if not isinstance(txt, str):
-        raise Exception("变量表达式非字符串")
+        raise Exception("Variable expression is not a string")
 
     # re正则匹配替换字符串 https://cloud.tencent.com/developer/article/1774589
     def replace(match, to_str = True) -> str:
@@ -201,7 +201,7 @@ custom_funs = {}
 def parse_and_call_func(expr):
     mat = re.match(r'([\w\d_]+)\((.+)\)', expr)
     if mat == None:
-        raise Exception("不符合函数调用语法: " + expr)
+        raise Exception("Mismatch function call syntax: " + expr)
 
     func = mat.group(1) # 函数名
     param = mat.group(2) # 函数参数
@@ -215,7 +215,7 @@ def call_func(name, param):
     elif name in custom_funs:
         func = custom_funs[name]
     else:
-        raise Exception(f'无效函数: {name}')
+        raise Exception(f'Invalid function: {name}')
     # 调用函数
     return func(param)
 
@@ -299,7 +299,7 @@ def type2by(type):
     try:
         from selenium.webdriver.common.by import By
     except ImportError:
-        print('未安装selenium, 请不要使用方法 type2by()')
+        print('Selenium libary is not installed, please do not use type2by() method')
 
     if type == 'id':
         return By.ID
@@ -321,4 +321,4 @@ def type2by(type):
     if type == 'class':
         return By.CLASS_NAME
 
-    raise Exception(f"不支持查找类型: {type}")
+    raise Exception(f"Invalid find type: {type}")
