@@ -186,7 +186,6 @@ def analyze_var_expr(expr):
 
     return get_var(expr)
 
-
 # 替换变量时用到的函数
 # 系统函数
 sys_funcs = {
@@ -205,8 +204,9 @@ def parse_and_call_func(expr):
 
     func = mat.group(1) # 函数名
     param = mat.group(2) # 函数参数
+    param = param.split(',')
 
-    return call_func(func, param)
+    return call_func(func, *param)
 
 # 调用函数
 def call_func(name, param):
@@ -322,3 +322,6 @@ def type2by(type):
         return By.CLASS_NAME
 
     raise Exception(f"Invalid find type: {type}")
+
+# if __name__ == '__main__':
+#     print(parse_and_call_func('random_int(3)'))
