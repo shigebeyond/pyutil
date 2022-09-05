@@ -93,6 +93,13 @@ def random_int(n):
         random_str += str(random.randint(0, 9))
     return random_str
 
+# 从list变量中随机挑选一个元素
+def random_element(var):
+    items = get_var(var)
+    if isinstance(items, list):
+        raise Exception('Param in random_element(param) must be list type')
+    return random.choice(items)
+
 # 自增的值
 incr_vals = {}
 
@@ -191,6 +198,7 @@ def analyze_var_expr(expr):
 sys_funcs = {
     'random_str': random_str,
     'random_int': random_int,
+    'random_element': random_element,
     'incr': incr
 }
 # 自定义函数, 通过 -c 注入的外部python文件定义的函数
