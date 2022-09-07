@@ -9,6 +9,7 @@ import sys
 import random
 import json
 from jsonpath import jsonpath
+import csv
 import requests
 from optparse import OptionParser
 import query_string
@@ -48,17 +49,27 @@ def read_http_file(url):
     # return res.content.decode("utf-8")
     return res.text
 
-# 读yaml配置
-# :param yaml_file (步骤配置的)yaml文件，支持本地文件与http文件
+# 读yaml文件
+# :param yaml_file yaml文件，支持本地文件与http文件
 def read_yaml(yaml_file):
     txt = read_local_or_http_file(yaml_file)
     return yaml.load(txt, Loader=yaml.FullLoader)
 
-# 读yaml配置
-# :param json_file (步骤配置的)json文件，支持本地文件与http文件
+# 读yaml文件
+# :param json_file json文件，支持本地文件与http文件
 def read_json(json_file):
     txt = read_local_or_http_file(json_file)
     return json.loads(txt)
+
+# 读csv文件
+# :param csv_file csv文件，支持本地文件与http文件
+# :return list of OrderedDict
+def read_csv(csv_file):
+    txt = read_local_or_http_file(csv_file)
+    # reader是迭代器, 迭代OrderedDict
+    reader = csv.DictReader(txt.splitlines(), skipinitialspace=True)
+    # 转list
+    return list(reader)
 
 # 本地文件或http文件
 def read_local_or_http_file(file):
@@ -331,5 +342,12 @@ def type2by(type):
 
     raise Exception(f"Invalid find type: {type}")
 
-# if __name__ == '__main__':
-#     print(parse_and_call_func('random_int(3)'))
+'''
+if __name__ == '__main__':
+   # print(parse_and_call_func('random_int(3)'))
+    rows = read_csv('/home/shi/tk.csv')
+    print(rows)
+    for r in rows:
+        print(r['uid'])
+        print(jsonpath(r, '$.token'))
+'''
