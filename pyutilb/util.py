@@ -154,6 +154,7 @@ def replace_var(txt, to_str = True):
 
     # 如果是字典，则每个元素递归替换
     if isinstance(txt, dict):
+        txt = txt.copy() # 要拷贝, 不能直接改原来的参数值, 否则在for中循环调用同一个动作时, 该动作的参数只能替换一次变量
         for k, v in txt.items():
             txt[k] = replace_var(v)  # 替换变量
         return txt
