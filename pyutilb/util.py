@@ -187,8 +187,10 @@ def do_replace_var(txt, to_str = True):
         return replace(mat, to_str)
 
     # 2 局部匹配: 由 普通字符串 + 变量表达式 组成
-    txt = re.sub(r'\$([\w\d_]+)', replace, txt)  # 处理变量 $msg
-    txt = re.sub(r'\$\{([\w\d_\.\(\)]+)\}', replace, txt)  # 处理变量 ${data.msg} 或 函数调用 ${random_str(1)}
+    # (?<!\\)\$ 表示 $ 前面不能是 \，也就是 \$ 是不替换参数的
+    txt = re.sub(r'(?<!\\)\$([\w\d_]+)', replace, txt)  # 处理变量 $msg
+    txt = re.sub(r'(?<!\\)\$\{([\w\d_\.\(\)]+)\}', replace, txt)  # 处理变量 ${data.msg} 或 函数调用 ${random_str(1)}
+    txt = re.sub(r'\\\$', '$', txt)  # 将 \$ 反转义为 $, jkmvc调用php controller时url有$
     return txt
 
 # 解析变量表达式
