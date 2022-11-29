@@ -121,6 +121,13 @@ def incr(key):
     incr_vals[key] = incr_vals[key] + 1
     return incr_vals[key]
 
+# 获得list变量长度
+def get_len(var):
+    items = get_var(var)
+    if items == None:
+        return 0
+    return len(items)
+
 # 变量
 bvars = {}
 
@@ -232,7 +239,8 @@ sys_funcs = {
     'random_str': random_str,
     'random_int': random_int,
     'random_element': random_element,
-    'incr': incr
+    'incr': incr,
+    'len': get_len
 }
 # 自定义函数, 通过 -c 注入的外部python文件定义的函数
 custom_funs = {}
