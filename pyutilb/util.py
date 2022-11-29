@@ -178,7 +178,7 @@ def do_replace_var(txt, to_str = True):
 
     # 1 整体匹配: 整个是纯变量表达式
     mat1 = re.match(r'\$([\w\d_]+)', txt)
-    mat2 = re.match(r'\$\{([\w\d_\.\(\)]+)\}', txt)
+    mat2 = re.match(r'\$\{([\w\d_\.\(\)\[\]]+)\}', txt)
     if mat1 or mat2:
         if mat1:
             mat = mat1
@@ -199,13 +199,32 @@ def do_replace_var(txt, to_str = True):
 def analyze_var_expr(expr):
     # 单独处理
     if '(' in expr:  # 函数调用, 如 random_str(1)
-        r = parse_and_call_func(expr)
-        return r
+        return parse_and_call_func(expr)
 
     if '.' in expr:  # 有多级属性, 如 data.msg
         return jsonpath(bvars, '$.' + expr)[0]
 
+    if '[' in expr:  # 有属性, 如 df[name]
+        return parse_pandas(expr)
+
     return get_var(expr)
+
+# 解析pandas字段表达式
+def parse_pandas(expr):
+    try:
+        import pandas as pd
+    except ImportError:
+        print('pandas libary is not installed, please do not use [] syntax')
+    mat = re.match(r'([\w\d_]+)\[(.+)\]', expr)
+    if mat == None:
+        raise Exception("Mismatch [] syntax: " + expr)
+
+    var = mat.group(1)  # df变量
+    prop = mat.group(2)  # 属性名
+    val = bvars[var]
+    if not isinstance(val, pd.DataFrame):
+        raise Exception(f"变量[{var}]值不是DataFrame: {val}")
+    return val[prop]
 
 # 替换变量时用到的函数
 # 系统函数
