@@ -247,15 +247,20 @@ custom_funs = {}
 
 # 解析并调用函数
 def parse_and_call_func(expr):
+    func, param = parse_func(expr)
+
+    return call_func(func, *param)
+
+# 解析函数与参数
+def parse_func(expr):
     mat = re.match(r'([\w\d_]+)\((.+)\)', expr)
     if mat == None:
         raise Exception("Mismatch function call syntax: " + expr)
 
-    func = mat.group(1) # 函数名
-    param = mat.group(2) # 函数参数
+    func = mat.group(1)  # 函数名
+    param = mat.group(2)  # 函数参数
     param = param.split(',')
-
-    return call_func(func, *param)
+    return func, param
 
 # 调用函数
 def call_func(name, param):
