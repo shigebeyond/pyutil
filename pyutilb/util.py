@@ -15,6 +15,7 @@ from optparse import OptionParser
 import query_string
 from pyutilb.module_loader import load_module_funs
 
+# -------------------- 读写文件 ----------------------
 # 写文本文件
 def write_file(path, content, append = False):
     if append:
@@ -81,16 +82,16 @@ def read_local_or_http_file(file):
         txt = read_file(file)
     return txt
 
-
 # 输出异常
 def print_exception(ex):
     print('\033[31mException occurs: ' + str(ex) + '\033[0m')
 
+# -------------------- 系统函数 ----------------------
+base_str = 'ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789'
 # 生成一个指定长度的随机字符串
 def random_str(n):
     n = int(n)
     random_str = ''
-    base_str = 'ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789'
     length = len(base_str) - 1
     for i in range(n):
         random_str += base_str[random.randint(0, length)]
@@ -128,6 +129,19 @@ def get_len(var):
         return 0
     return len(items)
 
+# -------------------- ExcelBoot用到的系统函数 ----------------------
+# 添加sheet链接
+# https://www.cnblogs.com/pythonwl/p/14363360.html
+def link_sheet(sheet, label=None):
+    if label == None:
+        label = sheet
+    return f'=HYPERLINK("#{sheet}!B2", "{label}")'
+
+# 添加链接
+def link(label, url):
+    return f'=HYPERLINK("{url}", "{label}")'
+
+# -------------------- 变量读写+表达式解析与执行 ----------------------
 # 变量
 bvars = {}
 
@@ -169,34 +183,53 @@ def replace_var(txt, to_str = True):
     # 字符串：直接替换
     return do_replace_var(txt, to_str)
 
+# 中文正则: \u4e00-\u9fa5
+# 属性正则
+reg_prop_pure = '[\w\d_\u4e00-\u9fa5]+'
+# 变量的正则
+reg_var_pure = '[\w\d_]+'
+reg_var = f'\$({reg_var_pure})'
+# 表达式正则: 需兼容 random_str(1) / data.msg / df[name]
+# reg_expr = '\$\{([\w\d_,\.\(\)\[\]\u4e00-\u9fa5]+)\}' # 太多情况不能匹配, 因为参数值可能各种各样字符都有
+# 函数调用的正则: 如 random_str(1)
+reg_func_pure = '([\w\d_]+)\((.*)\)'
+reg_func = '\$\{(' + reg_func_pure + ')\}'
+# 多级属性的正则: 如 data.msg
+reg_props = '\$\{(' + f'{reg_var_pure}(\.{reg_prop_pure})*' + ')\}'
+# df属性的正则: 如 df[name]
+reg_df_prop = '\$\{(' + f'{reg_var_pure}\[{reg_prop_pure}\]' + ')\}'
+# 所有的表达式正则
+reg_exprs = [reg_var, reg_func, reg_props, reg_df_prop]
+
+# re正则匹配替换纯变量表达式
+# https://cloud.tencent.com/developer/article/1774589
+def replace_pure_var_expr(match, to_str = True) -> str:
+    r = analyze_var_expr(match.group(1))
+    if to_str: # 转字符串
+        return str(r)
+    return r # 原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量
+
 # 真正的替换变量: 将 $变量名 替换为 变量值
 # :param txt 只能接收字符串
 # :param txt 是否转为字符串, 否则原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量; 只针对整体匹配的情况
-def do_replace_var(txt, to_str = True):
+# :param replace 正则替换函数, 用于替换纯变量表达式
+def do_replace_var(txt, to_str = True, replace = replace_pure_var_expr):
     if not isinstance(txt, str):
         raise Exception("Variable expression is not a string")
 
-    # re正则匹配替换字符串 https://cloud.tencent.com/developer/article/1774589
-    def replace(match, to_str = True) -> str:
-        r = analyze_var_expr(match.group(1))
-        if to_str: # 转字符串
-            return str(r)
-        return r # 原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量
+    if '$' not in txt: # 无需替换
+        return txt
 
     # 1 整体匹配: 整个是纯变量表达式
-    mat1 = re.match(r'\$([\w\d_]+)', txt)
-    mat2 = re.match(r'\$\{([\w\d_\.\(\)\[\]]+)\}', txt)
-    if mat1 or mat2:
-        if mat1:
-            mat = mat1
-        else:
-            mat = mat2
-        return replace(mat, to_str)
+    for reg in reg_exprs:
+        mat = re.match(rf'{reg}', txt)
+        if mat:
+            return replace(mat, to_str)
 
     # 2 局部匹配: 由 普通字符串 + 变量表达式 组成
     # (?<!\\)\$ 表示 $ 前面不能是 \，也就是 \$ 是不替换参数的
-    txt = re.sub(r'(?<!\\)\$([\w\d_]+)', replace, txt)  # 处理变量 $msg
-    txt = re.sub(r'(?<!\\)\$\{([\w\d_\.\(\)]+)\}', replace, txt)  # 处理变量 ${data.msg} 或 函数调用 ${random_str(1)}
+    for reg in reg_exprs:
+        txt = re.sub(rf'(?<!\\){reg}', replace, txt)  # 处理变量
     txt = re.sub(r'\\\$', '$', txt)  # 将 \$ 反转义为 $, jkmvc调用php controller时url有$
     return txt
 
@@ -212,12 +245,12 @@ def analyze_var_expr(expr):
         return jsonpath(bvars, '$.' + expr)[0]
 
     if '[' in expr:  # 有属性, 如 df[name]
-        return parse_pandas(expr)
+        return parse_df_prop(expr)
 
     return get_var(expr)
 
-# 解析pandas字段表达式
-def parse_pandas(expr):
+# 解析pandas df字段表达式
+def parse_df_prop(expr):
     try:
         import pandas as pd
     except ImportError:
@@ -233,6 +266,7 @@ def parse_pandas(expr):
         raise Exception(f"变量[{var}]值不是DataFrame: {val}")
     return val[prop]
 
+# -------------------- 函数解析与调用 ----------------------
 # 替换变量时用到的函数
 # 系统函数
 sys_funcs = {
@@ -240,30 +274,42 @@ sys_funcs = {
     'random_int': random_int,
     'random_element': random_element,
     'incr': incr,
-    'len': get_len
+    'len': get_len,
+    'link': link,
+    'link_sheet': link_sheet,
 }
 # 自定义函数, 通过 -c 注入的外部python文件定义的函数
 custom_funs = {}
 
 # 解析并调用函数
 def parse_and_call_func(expr):
-    func, param = parse_func(expr)
-
-    return call_func(func, *param)
+    func, params = parse_func(expr)
+    return call_func(func, params)
 
 # 解析函数与参数
 def parse_func(expr):
-    mat = re.match(r'([\w\d_]+)\((.+)\)', expr)
+    mat = re.match(rf'{reg_func_pure}', expr)
     if mat == None:
         raise Exception("Mismatch function call syntax: " + expr)
 
     func = mat.group(1)  # 函数名
     param = mat.group(2)  # 函数参数
-    param = param.split(',')
-    return func, param
+    params = split_param(param)
+    return func, params
+
+# 用,分割参数
+def split_param(param):
+    # return param.split(',')
+
+    # 处理某个参数中包含\,的情况 + 逗号后有空格
+    params = re.split(r'(?<!\\),\s*', param)
+    for i in range(0, len(params)):
+        params[i] = params[i].replace('\,', ',')
+    return params
+
 
 # 调用函数
-def call_func(name, param):
+def call_func(name, params):
     if name in sys_funcs:
         func = sys_funcs[name]
     elif name in custom_funs:
@@ -271,8 +317,9 @@ def call_func(name, param):
     else:
         raise Exception(f'Invalid function: {name}')
     # 调用函数
-    return func(param)
+    return func(*params)
 
+# -------------------- selenium/appium用到的函数 ----------------------
 # 分离xpath与属性
 def split_xpath_and_prop(path):
     # 检查xpath是否最后有属性
@@ -296,6 +343,36 @@ def split_css_and_prop(path):
         prop = mat.group(1)
     return path, prop
 
+# 类型转by
+def type2by(type):
+    try:
+        from selenium.webdriver.common.by import By
+    except ImportError:
+        print('Selenium libary is not installed, please do not use type2by() method')
+
+    if type == 'id':
+        return By.ID
+    if type == 'name':
+        return By.NAME
+    if type == 'css':
+        return By.CSS_SELECTOR
+    if type == 'xpath':
+        return By.XPATH
+    if type == 'tag':
+        return By.TAG_NAME
+    if type == 'link_text': # 精确匹配<a>的全部文本
+        return By.LINK_TEXT
+    if type == 'partial_link_text': # 匹配<a>的部分文本
+        return By.PARTIAL_LINK_TEXT
+    # app
+    if type == 'aid':
+        return By.ACCESSIBILITY_ID
+    if type == 'class':
+        return By.CLASS_NAME
+
+    raise Exception(f"Invalid find type: {type}")
+
+# -------------------- 命令解析 ----------------------
 # 读 __init__ 文件中的元数据：author/version/description
 def read_init_file_meta(init_file):
     with open(init_file, 'rb') as f:
@@ -348,41 +425,19 @@ def parse_cmd(name, version):
     # print(args)
     return args
 
-# 类型转by
-def type2by(type):
-    try:
-        from selenium.webdriver.common.by import By
-    except ImportError:
-        print('Selenium libary is not installed, please do not use type2by() method')
-
-    if type == 'id':
-        return By.ID
-    if type == 'name':
-        return By.NAME
-    if type == 'css':
-        return By.CSS_SELECTOR
-    if type == 'xpath':
-        return By.XPATH
-    if type == 'tag':
-        return By.TAG_NAME
-    if type == 'link_text': # 精确匹配<a>的全部文本
-        return By.LINK_TEXT
-    if type == 'partial_link_text': # 匹配<a>的部分文本
-        return By.PARTIAL_LINK_TEXT
-    # app
-    if type == 'aid':
-        return By.ACCESSIBILITY_ID
-    if type == 'class':
-        return By.CLASS_NAME
-
-    raise Exception(f"Invalid find type: {type}")
-
-'''
 if __name__ == '__main__':
-   # print(parse_and_call_func('random_int(3)'))
+    set_var('name', 'shi')
+    set_var('age', 1)
+    print(parse_and_call_func('random_int(3)'))
+    print(parse_and_call_func('link_sheet(目录,返回目录)'))
+    print(do_replace_var('${random_int(3)}'))
+    print(do_replace_var('${link_sheet(目录,返回目录)}'))
+    print(do_replace_var('hello, ${name}'))
+    print(do_replace_var('$name'))
+    '''
     rows = read_csv('/home/shi/tk.csv')
     print(rows)
     for r in rows:
         print(r['uid'])
         print(jsonpath(r, '$.token'))
-'''
+   '''
