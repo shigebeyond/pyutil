@@ -146,7 +146,7 @@ class YamlBoot(object):
     # --------- 动作处理的函数 --------
     # 解析动作名for(n)中的n: 或数字或列表
     def parse_for_n(self, n):
-        if n == None or n == '':
+        if n is None or n == '':
             return None
 
         # 1 数字
@@ -157,10 +157,10 @@ class YamlBoot(object):
         expr = "${" + n + "}"
         n = replace_var(expr, False)
 
-        # fix bug: pd.Series == None 居然返回pd.Series
+        # fix bug: pd.Series is None 居然返回pd.Series
         if self.is_pd_series(n):
             return n
-        if n == None or not (isinstance(n, (list, tuple, set, int))):
+        if n is None or not (isinstance(n, (list, tuple, set, int))):
             raise Exception(f'Variable in for({n}) parentheses must be int or list or pd.Series type')
         return n
 
@@ -180,13 +180,13 @@ class YamlBoot(object):
         label = f"for({n})"
         # 循环次数
         # fix bug: pd.Series == None 居然返回pd.Series
-        n_null = (not self.is_pd_series(n)) and n == None
+        n_null = (not self.is_pd_series(n)) and n is None
         if n_null:
             n = sys.maxsize # 最大int，等于无限循环次数
             label = f"for(∞)"
         # 循环的列表值
         items = None
-        if isinstance(n, (list, tuple, set) or self.is_pd_series(n)):
+        if isinstance(n, (list, tuple, set)) or self.is_pd_series(n):
             items = n
             n = len(items)
         log.debug(f"-- Loop start: {label} -- ")
@@ -197,7 +197,7 @@ class YamlBoot(object):
                 # i+1表示迭代次数比较容易理解
                 log.debug(f"{i+1}th iteration")
                 set_var('for_i', i+1) # 更新索引
-                if n_null or items == None:
+                if n_null or items is None:
                     v = None
                 else:
                     v = items[i]
@@ -259,9 +259,9 @@ class YamlBoot(object):
     # :param steps
     # :param name
     def proc(self, steps, name):
-        if name == None or name.isspace():
+        if name is None or name.isspace():
             raise Exception("过程名不能为空")
-        if steps == None:
+        if steps is None:
             raise Exception("过程中子步骤不能为空")
         self.procs[name] = steps
 
