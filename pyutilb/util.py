@@ -254,7 +254,7 @@ def parse_df_prop(expr):
     try:
         import pandas as pd
     except ImportError:
-        print('pandas libary is not installed, please do not use [] syntax')
+        raise Exception('pandas libary is not installed, please do not use [] syntax')
     mat = re.match(r'([\w\d_]+)\[(.+)\]', expr)
     if mat == None:
         raise Exception("Mismatch [] syntax: " + expr)
