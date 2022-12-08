@@ -2,7 +2,7 @@ from . import util
 from . import log
 from . import ocr_youdao
 from . import ocr_baidu
-from .yaml_boot import YamlBoot
+from .yaml_boot import YamlBoot, BreakException
 
 __author__ = "shigebeyond"
 __version__ = "1.0.4"
@@ -16,5 +16,6 @@ __all__ = [
     "log",
     "ocr_youdao",
     "ocr_baidu",
-    "YamlBoot"
+    "YamlBoot",
+    "BreakException"
 ]
