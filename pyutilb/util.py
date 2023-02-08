@@ -14,6 +14,7 @@ import requests
 from optparse import OptionParser
 import query_string
 from pyutilb.module_loader import load_module_funs
+import pandas as pd
 
 # -------------------- 读写文件 ----------------------
 # 写文本文件
@@ -64,13 +65,9 @@ def read_json(json_file):
 
 # 读csv文件
 # :param csv_file csv文件，支持本地文件与http文件
-# :return list of OrderedDict
+# :return pd.DataFrame
 def read_csv(csv_file):
-    txt = read_local_or_http_file(csv_file)
-    # reader是迭代器, 迭代OrderedDict
-    reader = csv.DictReader(txt.splitlines(), skipinitialspace=True)
-    # 转list
-    return list(reader)
+    return pd.read_csv(csv_file)
 
 # 本地文件或http文件
 def read_local_or_http_file(file):
@@ -214,6 +211,9 @@ def replace_pure_var_expr(match, to_str = True) -> str:
 # :param txt 是否转为字符串, 否则原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量; 只针对整体匹配的情况
 # :param replace 正则替换函数, 用于替换纯变量表达式
 def do_replace_var(txt, to_str = True, replace = replace_pure_var_expr):
+    if txt == None:
+        return ''
+
     if not isinstance(txt, str):
         raise Exception("Variable expression is not a string")
 
@@ -251,10 +251,6 @@ def analyze_var_expr(expr):
 
 # 解析pandas df字段表达式
 def parse_df_prop(expr):
-    try:
-        import pandas as pd
-    except ImportError:
-        raise Exception('pandas libary is not installed, please do not use [] syntax')
     mat = re.match(r'([\w\d_]+)\[(.+)\]', expr)
     if mat == None:
         raise Exception("Mismatch [] syntax: " + expr)
