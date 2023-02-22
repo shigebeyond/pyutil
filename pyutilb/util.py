@@ -421,7 +421,17 @@ def parse_cmd(name, version):
     # print(args)
     return args
 
+# 抓取pypi.org上指定项目的版本
+def fetch_pypi_project_version(project):
+    html = read_http_file(f"https://pypi.org/project/{project}")
+    # mat = re.search('<h1 class="package-header__name">(.+)</h1>', html)
+    mat = re.search(f'package-header__name">\s*{project} ([\d\.]+)', html)
+    if mat == None:
+        return None
+    return mat.group(1)
+
 if __name__ == '__main__':
+    '''
     set_var('name', 'shi')
     set_var('age', 1)
     print(parse_and_call_func('random_int(3)'))
@@ -431,9 +441,13 @@ if __name__ == '__main__':
     print(do_replace_var('hello, ${name}'))
     print(do_replace_var('$name'))
     '''
+    '''
     rows = read_csv('/home/shi/tk.csv')
     print(rows)
     for r in rows:
         print(r['uid'])
         print(jsonpath(r, '$.token'))
    '''
+    project = 'AppiumBoot'
+    version = fetch_pypi_project_version(project)
+    print(f"{project} = {version}")
