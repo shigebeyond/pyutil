@@ -28,14 +28,14 @@ class YamlBoot(object):
             'set_vars': self.set_vars,
             'print_vars': self.print_vars,
             'exec': self.exec,
-            'proc': self.proc,
+            'addtional_func': self.addtional_func,
             'call': self.call,
         }
         set_var('boot', self)
         # 当前文件
         self.step_file = None
-        # 记录定义的过程
-        self.procs = {}
+        # 记录定义的额外的函数, 通过 @函数名 来定义, 通过 call:函数名 来调用
+        self.addtional_funcs = {}
 
     # 添加单个动作
     def add_actions(self, name: str, callback: str):
@@ -126,12 +126,17 @@ class YamlBoot(object):
     def run_action(self, action, param):
         log.debug(f"handle action: {action}={param}")
 
+        # 函数表达式
         has_other_arg = '(' in action # 是否有其他参数
         if has_other_arg: # 解析其他参数
             action, params = parse_func(action)
             n = params
             if len(params) == 1:
                 n = params[0]
+        elif action[0] == '@': # 定义额外动作的表达式
+            has_other_arg = True
+            n = action[1:]
+            action = 'addtional_func'
 
         if action not in self.actions:
             raise Exception(f'Invalid action: [{action}]')
@@ -255,22 +260,22 @@ class YamlBoot(object):
         output = os.popen(cmd).read()
         log.debug(f"execute commmand: {cmd} | result: {output}")
 
-    # 定义过程, 可包含多个子步骤
+    # 定义额外的函数, 可包含多个子步骤
     # :param steps
     # :param name
-    def proc(self, steps, name):
+    def addtional_func(self, steps, name):
         if name is None or name.isspace():
-            raise Exception("过程名不能为空")
+            raise Exception("额外的函数名不能为空")
         if steps is None:
-            raise Exception("过程中子步骤不能为空")
-        self.procs[name] = steps
+            raise Exception("额外的函数中子步骤不能为空")
+        self.addtional_funcs[name] = steps
 
-    # 调用过程
-    # :param config 过程名
+    # 调用额外的函数
+    # :param config 额外的函数名
     def call(self, name):
-        if name not in self.procs:
+        if name not in self.addtional_funcs:
             raise Exception("未定义函数")
 
         # 执行多个步骤
-        steps = self.procs[name]
+        steps = self.addtional_funcs[name]
         self.run_steps(steps)
