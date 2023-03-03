@@ -154,15 +154,20 @@ class YamlBoot(object):
         if isinstance(n, int) or n.isdigit():
             return int(n)
 
-        # 2 变量表达式, 必须是int/list/df.Series类型
+        # 2 范围表达式，如[1,3]
+        if ':' in n:
+            start, end, _ = parse_range(n)
+            return range(start, end + 1)
+
+        # 3 变量表达式, 必须是int/list/df.Series类型
         expr = "${" + n + "}"
         n = replace_var(expr, False)
 
         # fix bug: pd.Series is None 居然返回pd.Series
         if self.is_pd_series(n):
             return n
-        if n is None or not (isinstance(n, (list, tuple, set, int))):
-            raise Exception(f'Variable in for({n}) parentheses must be int or list or pd.Series type')
+        if n is None or not (isinstance(n, (list, tuple, set, range, int))):
+            raise Exception(f'Variable in for({n}) parentheses must be int/list/tuple/set/range/pd.Series type')
         return n
 
     # 判断是否是pd.Series, 但不是所有boot项目都依赖pandas
@@ -187,7 +192,7 @@ class YamlBoot(object):
             label = f"for(∞)"
         # 循环的列表值
         items = None
-        if isinstance(n, (list, tuple, set)) or self.is_pd_series(n):
+        if isinstance(n, (list, tuple, set, range)) or self.is_pd_series(n):
             items = n
             n = len(items)
         log.debug(f"-- Loop start: {label} -- ")

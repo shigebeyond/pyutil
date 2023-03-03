@@ -105,8 +105,8 @@ def random_int(n):
 # 从list变量中随机挑选一个元素
 def random_element(var):
     items = get_var(var)
-    if isinstance(items, list):
-        raise Exception('Param in random_element(param) must be list type')
+    if isinstance(items, list, tuple, set, range):
+        raise Exception('Param in random_element(param) must be list/tuple/set/range/range type')
     return random.choice(items)
 
 # 自增的值
@@ -167,7 +167,7 @@ def replace_var(txt, to_str = True):
         return txt
 
     # 如果是列表/元组/集合，则每个元素递归替换
-    if isinstance(txt, (list, tuple, set)):
+    if isinstance(txt, (list, tuple, set, range)):
         return list(map(replace_var, txt))
 
     # 如果是字典，则每个元素递归替换
@@ -429,6 +429,30 @@ def fetch_pypi_project_version(project):
     if mat == None:
         return None
     return mat.group(1)
+
+# 解析范围表达式，如[1,3]
+def parse_range(str):
+    # 找到范围表达式，如[1,3]
+    mat = re.search(r'\[(\d+):(\d+)\]', str)
+    if mat == None:
+        raise Exception("r没有范围表达式")
+    range_exp = mat.group()
+    start = int(mat.group(1))
+    end = int(mat.group(2))
+    if end < start:
+        raise Exception("r范围表达式错误，结束值应该大于等于初始值")
+    return start, end, range_exp
+
+# 迭代范围表达式，如将 a[1,3].html 转变为迭代器，包含 a1.html a2.html a3.html
+# :param str 范围字符串
+# :param zfill_width 填充0的长度, 如对1要转为01
+def iterate_range_str(range_str, zfill_width = None):
+    start, end, range_exp = parse_range(range_str)
+    for i in range(start, end + 1):
+        it = str(i)
+        if zfill_width != None: # 按长度补0
+            it = it.zfill(int(zfill_width))
+        yield range_str.replace(range_exp, it)
 
 if __name__ == '__main__':
     '''
