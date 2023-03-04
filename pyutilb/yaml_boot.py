@@ -4,6 +4,7 @@
 import fnmatch
 from pyutilb import log
 from pyutilb.util import *
+from pyutilb.reporter import Reporter
 
 # 跳出循环的异常
 class BreakException(Exception):
@@ -36,9 +37,11 @@ class YamlBoot(object):
         self.step_file = None
         # 记录定义的过程, 通过 ~过程名 来定义, 通过 call:过程名 来调用
         self.procs = {}
+        # 报告者
+        self.reporter = Reporter()
 
     # 添加单个动作
-    def add_actions(self, name: str, callback: str):
+    def add_action(self, name: str, callback: str):
         self.actions[name] = callback
 
     # 添加多个动作
@@ -50,6 +53,22 @@ class YamlBoot(object):
     :param step_files 步骤配置文件或目录的列表
     '''
     def run(self, step_files):
+        try:
+            self.reporter.start()
+
+            # 真正的执行
+            self.do_run(step_files)
+
+            self.reporter.end()
+        except Exception as ex:
+            self.reporter.end(ex)
+            raise ex
+
+    '''
+    真正的执行入口
+    :param step_files 步骤配置文件或目录的列表
+    '''
+    def do_run(self, step_files):
         for path in step_files:
             # 1 模式文件
             if '*' in path:
@@ -92,6 +111,8 @@ class YamlBoot(object):
         steps = self.load_1file(step_file, include)
         log.debug(f"Load and run step file: {self.step_file}")
 
+        self.reporter.incr_yaml() # 统计
+
         # 执行多个步骤
         self.run_steps(steps)
 
@@ -115,7 +136,9 @@ class YamlBoot(object):
     def run_steps(self, steps):
         # 逐个步骤调用多个动作
         for step in steps:
+            self.reporter.incr_step()  # 统计
             for action, param in step.items():
+                self.reporter.incr_action()  # 统计
                 self.run_action(action, param)
 
     '''
