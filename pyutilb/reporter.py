@@ -46,4 +46,5 @@ class Reporter(object):
             f"执行的yaml文件数: {self.yamls}\n" +\
             f"执行的步骤数: {self.steps}\n" +\
             f"执行的动作数: {self.actions}"
+        # log.debug(msg)
         write_file('./report.txt', msg)
