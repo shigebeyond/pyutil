@@ -185,6 +185,7 @@ def replace_var(txt, to_str = True):
 reg_prop_pure = '[\w\d_\u4e00-\u9fa5]+'
 # 变量的正则
 reg_var_pure = '[\w\d_]+'
+# 简单变量, 如 $xxx
 reg_var = f'\$({reg_var_pure})'
 # 表达式正则: 需兼容 random_str(1) / data.msg / df[name]
 # reg_expr = '\$\{([\w\d_,\.\(\)\[\]\u4e00-\u9fa5]+)\}' # 太多情况不能匹配, 因为参数值可能各种各样字符都有
@@ -192,9 +193,9 @@ reg_var = f'\$({reg_var_pure})'
 reg_func_pure = '([\w\d_]+)\((.*)\)'
 reg_func = '\$\{(' + reg_func_pure + ')\}'
 # 多级属性的正则: 如 data.msg
-reg_props = '\$\{(' + f'{reg_var_pure}(\.{reg_prop_pure})*' + ')\}'
+reg_props = '\$\{(' + f'({reg_var_pure})(\.{reg_prop_pure})*' + ')\}'
 # df属性的正则: 如 df[name]
-reg_df_prop = '\$\{(' + f'{reg_var_pure}\[{reg_prop_pure}\]' + ')\}'
+reg_df_prop = '\$\{(' + f'({reg_var_pure})\[{reg_prop_pure}\]' + ')\}'
 # 所有的表达式正则
 reg_exprs = [reg_var, reg_func, reg_props, reg_df_prop]
 
