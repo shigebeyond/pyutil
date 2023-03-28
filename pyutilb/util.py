@@ -15,6 +15,7 @@ from optparse import OptionParser
 import query_string
 from pyutilb.module_loader import load_module_funs
 import pandas as pd
+import threading
 
 # -------------------- 读写文件 ----------------------
 # 写文本文件
@@ -139,23 +140,31 @@ def link(label, url):
     return f'=HYPERLINK("{url}", "{label}")'
 
 # -------------------- 变量读写+表达式解析与执行 ----------------------
-# 变量
-bvars = {}
+# 变量: local.vars
+local = threading.local()
+
+# 重置变量
+def reset_vars():
+    local.vars = {}
 
 # 设置变量
 def set_var(name, val):
-    bvars[name] = val
+    local.vars[name] = val
 
-# 获取变量
+# 获取全部变量
+def get_vars():
+    return local.vars
+
+# 获取单个变量
 # :param name 变量名
 # :param throw_key_exception 当变量不存在，是否抛异常
 def get_var(name, throw_key_exception = True):
-    if name not in bvars:
+    if name not in local.vars:
         if throw_key_exception:
             raise Exception(f'Variable not exist: {name}')
         return None
 
-    return bvars[name]
+    return local.vars[name]
 
 # 替换变量： 将 $变量名 或 ${变量表达式} 替换为 变量值
 # :param txt 兼容基础类型+字符串+列表+字典等类型, 如果是字符串, 则是带变量的表达式
@@ -243,7 +252,7 @@ def analyze_var_expr(expr):
         return parse_and_call_func(expr)
 
     if '.' in expr:  # 有多级属性, 如 data.msg
-        return jsonpath(bvars, '$.' + expr)[0]
+        return jsonpath(local.vars, '$.' + expr)[0]
 
     if '[' in expr:  # 有属性, 如 df[name]
         return parse_df_prop(expr)
@@ -258,7 +267,7 @@ def parse_df_prop(expr):
 
     var = mat.group(1)  # df变量
     prop = mat.group(2)  # 属性名
-    val = bvars[var]
+    val = local.vars[var]
     if not isinstance(val, pd.DataFrame):
         raise Exception(f"变量[{var}]值不是DataFrame: {val}")
     return val[prop]
@@ -411,7 +420,7 @@ def parse_cmd(name, version):
     # 更新变量
     if option.data != None:
         data = query_string.parse(option.data)
-        bvars.update(data)
+        local.vars.update(data)
 
     # 加载自定义函数
     if option.funs != None:

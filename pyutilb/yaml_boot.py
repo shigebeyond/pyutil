@@ -54,6 +54,8 @@ class YamlBoot(object):
     '''
     def run(self, step_files):
         try:
+            reset_vars() # 重置变量
+
             self.reporter.start()
 
             # 真正的执行
@@ -251,7 +253,7 @@ class YamlBoot(object):
 
     # 跳出for循环
     def break_if(self, expr):
-        val = eval(expr, globals(), bvars)  # 丢失本地与全局变量, 如引用不了json模块
+        val = eval(expr, globals(), get_vars())  # 丢失本地与全局变量, 如引用不了json模块
         if bool(val):
             raise BreakException(expr)
 
@@ -267,7 +269,7 @@ class YamlBoot(object):
 
     # 打印变量
     def print_vars(self, _):
-        log.info(f"Variables: {bvars}")
+        log.info(f"Variables: {get_vars()}")
 
     # 睡眠
     def sleep(self, seconds):
