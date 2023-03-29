@@ -1,6 +1,6 @@
 PyYAML == 6.0
 jsonpath == 0.82
-lxml >= 4.3.1
+lxml == 4.9.1
 requests == 2.27.1
 cssselect == 1.1.0
 query-string == 2020.12.3

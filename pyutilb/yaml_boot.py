@@ -4,7 +4,7 @@
 import fnmatch
 from pyutilb import log
 from pyutilb.util import *
-from pyutilb.reporter import Reporter
+from pyutilb.stat import Stat
 
 # 跳出循环的异常
 class BreakException(Exception):
@@ -37,8 +37,8 @@ class YamlBoot(object):
         self.step_file = None
         # 记录定义的过程, 通过 ~过程名 来定义, 通过 call:过程名 来调用
         self.procs = {}
-        # 报告者
-        self.reporter = Reporter()
+        # 统计
+        self.stat = Stat()
 
     # 添加单个动作
     def add_action(self, name: str, callback: str):
@@ -51,21 +51,23 @@ class YamlBoot(object):
     '''
     执行入口
     :param step_files 步骤配置文件或目录的列表
+    :param throwing 是否直接抛异常
     '''
-    def run(self, step_files):
+    def run(self, step_files, throwing = True):
         try:
-            reset_vars() # 重置变量
-
-            self.reporter.start()
+            self.stat.start()
 
             # 真正的执行
             self.do_run(step_files)
 
-            self.reporter.end()
+            self.stat.end()
         except Exception as ex:
-            self.reporter.end(ex)
-            raise ex
-
+            self.stat.end(ex)
+            if throwing:
+                raise ex
+        finally:
+            # 返回统计数据
+            return self.stat
     '''
     真正的执行入口
     :param step_files 步骤配置文件或目录的列表
@@ -113,10 +115,14 @@ class YamlBoot(object):
         steps = self.load_1file(step_file, include)
         log.debug(f"Load and run step file: {self.step_file}")
 
-        self.reporter.incr_yaml() # 统计
+        # 记录yaml开始
+        self.stat.enter_yaml(step_file)
 
         # 执行多个步骤
         self.run_steps(steps)
+
+        # 记录yaml结束
+        self.stat.exit_yaml()
 
     # 加载单个步骤文件
     # 会更新 self.step_dir 与 self.step_file
@@ -138,9 +144,9 @@ class YamlBoot(object):
     def run_steps(self, steps):
         # 逐个步骤调用多个动作
         for step in steps:
-            self.reporter.incr_step()  # 统计
+            self.stat.incr_step()  # 统计
             for action, param in step.items():
-                self.reporter.incr_action()  # 统计
+                self.stat.incr_action()  # 统计
                 self.run_action(action, param)
 
     '''

@@ -13,6 +13,7 @@ import csv
 import requests
 from optparse import OptionParser
 import query_string
+from pyutilb.threadlocal import ThreadLocal
 from pyutilb.module_loader import load_module_funs
 import pandas as pd
 import threading
@@ -84,6 +85,29 @@ def read_local_or_http_file(file):
 def print_exception(ex):
     print('\033[31mException occurs: ' + str(ex) + '\033[0m')
 
+# -------------------- 变量读写+表达式解析与执行 ----------------------
+# 变量: vars
+vars = ThreadLocal(lambda : {})
+
+# 设置变量
+def set_var(name, val):
+    get_vars()[name] = val
+
+# 获取全部变量
+def get_vars():
+    return vars.get()
+
+# 获取单个变量
+# :param name 变量名
+# :param throw_key_exception 当变量不存在，是否抛异常
+def get_var(name, throw_key_exception = True):
+    if name not in get_vars():
+        if throw_key_exception:
+            raise Exception(f'Variable not exist: {name}')
+        return None
+
+    return get_vars()[name]
+
 # -------------------- 系统函数 ----------------------
 base_str = 'ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789'
 # 生成一个指定长度的随机字符串
@@ -139,33 +163,7 @@ def link_sheet(sheet, label=None):
 def link(label, url):
     return f'=HYPERLINK("{url}", "{label}")'
 
-# -------------------- 变量读写+表达式解析与执行 ----------------------
-# 变量: local.vars
-local = threading.local()
-
-# 重置变量
-def reset_vars():
-    local.vars = {}
-
-# 设置变量
-def set_var(name, val):
-    local.vars[name] = val
-
-# 获取全部变量
-def get_vars():
-    return local.vars
-
-# 获取单个变量
-# :param name 变量名
-# :param throw_key_exception 当变量不存在，是否抛异常
-def get_var(name, throw_key_exception = True):
-    if name not in local.vars:
-        if throw_key_exception:
-            raise Exception(f'Variable not exist: {name}')
-        return None
-
-    return local.vars[name]
-
+# -------------------- 表达式解析与执行 ----------------------
 # 替换变量： 将 $变量名 或 ${变量表达式} 替换为 变量值
 # :param txt 兼容基础类型+字符串+列表+字典等类型, 如果是字符串, 则是带变量的表达式
 # :param to_str 是否转为字符串, 否则原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量; 只针对整体匹配的情况
@@ -252,7 +250,7 @@ def analyze_var_expr(expr):
         return parse_and_call_func(expr)
 
     if '.' in expr:  # 有多级属性, 如 data.msg
-        return jsonpath(local.vars, '$.' + expr)[0]
+        return jsonpath(get_vars(), '$.' + expr)[0]
 
     if '[' in expr:  # 有属性, 如 df[name]
         return parse_df_prop(expr)
@@ -267,7 +265,7 @@ def parse_df_prop(expr):
 
     var = mat.group(1)  # df变量
     prop = mat.group(2)  # 属性名
-    val = local.vars[var]
+    val = get_vars()[var]
     if not isinstance(val, pd.DataFrame):
         raise Exception(f"变量[{var}]值不是DataFrame: {val}")
     return val[prop]
@@ -402,7 +400,8 @@ def parse_cmd(name, version):
     # optParser.add_option("-h", "--help", dest="help", action="store_true") # 默认自带help
     optParser.add_option('-v', '--version', dest='version', action="store_true", help = 'Show version number and quit')
     optParser.add_option("-d", "--data", dest="data", type="string", help="set variable data, eg: a=1&b=2")
-    optParser.add_option("-f", "--f", dest="funs", type="string", help="set custom functions file, eg: cf.py")
+    optParser.add_option("-f", "--funs", dest="funs", type="string", help="set custom functions file, eg: cf.py")
+    optParser.add_option("-l", "--locustopt", dest="locustopt", type="string", help="locust options, eg: '--headless -u 10 -r 5 -t 20s --csv=result --html=report.html'")
 
     # 解析选项
     option, args = optParser.parse_args(args)
@@ -420,7 +419,7 @@ def parse_cmd(name, version):
     # 更新变量
     if option.data != None:
         data = query_string.parse(option.data)
-        local.vars.update(data)
+        get_vars().update(data)
 
     # 加载自定义函数
     if option.funs != None:
@@ -429,7 +428,7 @@ def parse_cmd(name, version):
 
     # print(option)
     # print(args)
-    return args
+    return args, option
 
 # 抓取pypi.org上指定项目的版本
 def fetch_pypi_project_version(project):

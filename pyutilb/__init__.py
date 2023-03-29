@@ -3,6 +3,7 @@ from . import log
 from . import ocr_youdao
 from . import ocr_baidu
 from .yaml_boot import YamlBoot, BreakException
+from .stat import Stat
 
 __author__ = "shigebeyond"
 __version__ = "1.0.6"
@@ -17,5 +18,6 @@ __all__ = [
     "ocr_youdao",
     "ocr_baidu",
     "YamlBoot",
-    "BreakException"
+    "BreakException",
+    "Stat"
 ]
