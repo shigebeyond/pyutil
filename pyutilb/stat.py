@@ -22,11 +22,17 @@ class Stat(object):
         # 记录错误
         self.err = None
 
-    def start(self):
-        self.start_time = datetime.datetime.now()
+    @classmethod
+    def start(cls):
+        item = cls()
+        item.start_time = datetime.datetime.now()
+        return item
 
     def end(self, err = None):
         self.end_time = datetime.datetime.now()
+        # 异常转str
+        if isinstance(err, Exception):
+            err = str(err)
         self.err = err
 
     def incr_step(self):

@@ -38,7 +38,7 @@ class YamlBoot(object):
         # 记录定义的过程, 通过 ~过程名 来定义, 通过 call:过程名 来调用
         self.procs = {}
         # 统计
-        self.stat = Stat()
+        self.stat = None
 
     # 添加单个动作
     def add_action(self, name: str, callback: str):
@@ -55,7 +55,7 @@ class YamlBoot(object):
     '''
     def run(self, step_files, throwing = True):
         try:
-            self.stat.start()
+            self.stat = Stat.start()
 
             # 真正的执行
             self.do_run(step_files)
