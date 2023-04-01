@@ -50,6 +50,10 @@ def read_byte_file(path):
 # 读http文件内容
 def read_http_file(url):
     res = requests.get(url)
+    if res.status_code == 404:
+        raise Exception(f"Remote file not exist: {url}")
+    if res.status_code != 200:
+        raise Exception(f"Fail to read remote file: {url} ")
     # return res.content.decode("utf-8")
     return res.text
 
@@ -71,13 +75,17 @@ def read_json(json_file):
 def read_csv(csv_file):
     return pd.read_csv(csv_file)
 
+# 是否是http文件
+def is_http_file(file):
+    return file.startswith('https://') or file.startswith('http://')
+
 # 本地文件或http文件
 def read_local_or_http_file(file):
-    if file.startswith('https://') or file.startswith('http://'):
+    if is_http_file(file):
         txt = read_http_file(file)
     else:
         if not os.path.exists(file):
-            raise Exception(f"File not found: {file}")
+            raise Exception(f"File not exist: {file}")
         txt = read_file(file)
     return txt
 
@@ -400,6 +408,7 @@ def parse_cmd(name, version):
     # optParser.add_option("-h", "--help", dest="help", action="store_true") # 默认自带help
     optParser.add_option('-v', '--version', dest='version', action="store_true", help = 'Show version number and quit')
     optParser.add_option("-d", "--data", dest="data", type="string", help="set variable data, eg: a=1&b=2")
+    optParser.add_option("-D", "--dataurl", dest="dataurl", type="string", help="set variable data from yaml url")
     optParser.add_option("-f", "--funs", dest="funs", type="string", help="set custom functions file, eg: cf.py")
     optParser.add_option("-l", "--locustopt", dest="locustopt", type="string", help="locust options, eg: '--headless -u 10 -r 5 -t 20s --csv=result --html=report.html'")
 
@@ -416,9 +425,14 @@ def parse_cmd(name, version):
         print(version)
         sys.exit(1)
 
-    # 更新变量
+    # 更新变量: 直接指定
     if option.data != None:
         data = query_string.parse(option.data)
+        get_vars().update(data)
+
+    # 更新变量: 通过yaml url来指定, 该url返回变量的yaml
+    if option.dataurl != None:
+        data = read_yaml(option.dataurl)
         get_vars().update(data)
 
     # 加载自定义函数

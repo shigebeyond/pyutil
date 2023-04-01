@@ -61,13 +61,12 @@ class YamlBoot(object):
             self.do_run(step_files)
 
             self.stat.end()
+            return self.stat
         except Exception as ex:
             self.stat.end(ex)
             if throwing:
                 raise ex
-        finally:
-            # 返回统计数据
-            return self.stat
+
     '''
     真正的执行入口
     :param step_files 步骤配置文件或目录的列表
@@ -83,7 +82,7 @@ class YamlBoot(object):
                 return
 
             # 2 不存在
-            if not os.path.exists(path):
+            if (not is_http_file(path)) and not os.path.exists(path):
                 raise Exception(f'Step config file or directory not exist: {path}')
 
             # 3 目录: 遍历执行子文件
@@ -129,11 +128,15 @@ class YamlBoot(object):
     def load_1file(self, step_file, include):
         # 获得步骤文件的绝对路径
         if include:  # 补上绝对路径
-            if not os.path.isabs(step_file):
+            if (not is_http_file(step_file)) and not os.path.isabs(step_file):
                 step_file = self.step_dir + os.sep + step_file
         else:  # 记录目录
-            step_file = os.path.abspath(step_file)
-            self.step_dir = os.path.dirname(step_file)
+            if is_http_file(step_file):
+                i = step_file.rindex('/')
+                self.step_dir = step_file[:i]
+            else:
+                step_file = os.path.abspath(step_file)
+                self.step_dir = os.path.dirname(step_file)
         # 记录步骤文件
         self.step_file = step_file
         # 读取步骤
