@@ -13,6 +13,8 @@ import csv
 import requests
 from optparse import OptionParser
 import query_string
+
+from pyutilb import log
 from pyutilb.threadlocal import ThreadLocal
 from pyutilb.module_loader import load_module_funs
 import pandas as pd
@@ -425,14 +427,15 @@ def parse_cmd(name, version):
         print(version)
         sys.exit(1)
 
-    # 更新变量: 直接指定
+    # 指定变量: 直接指定
     if option.data != None:
         data = query_string.parse(option.data)
         get_vars().update(data)
 
-    # 更新变量: 通过yaml url来指定, 该url返回变量的yaml
+    # 指定变量: 通过yaml url来指定, 该url返回变量的yaml
     if option.dataurl != None:
         data = read_yaml(option.dataurl)
+        log.debug(f"set variables: {data}")
         get_vars().update(data)
 
     # 加载自定义函数
