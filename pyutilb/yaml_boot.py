@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import fnmatch
-from pyutilb import log
+from pyutilb.log import log
 from pyutilb.util import *
 from pyutilb.stat import Stat
 

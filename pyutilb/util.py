@@ -14,7 +14,7 @@ import requests
 from optparse import OptionParser
 import query_string
 
-from pyutilb import log
+from pyutilb.log import log
 from pyutilb.threadlocal import ThreadLocal
 from pyutilb.module_loader import load_module_funs
 import pandas as pd

@@ -13,12 +13,9 @@ if platform.system().lower() == 'windows':
         return read1(self, filenames, encoding)
     ConfigParser.read = read2
 
-# 应用log配合着
-conf = __file__.replace("log.py", "logging.conf")
-logging.config.fileConfig(conf)
-
-# 创建logger
-logger = logging.getLogger("boot")
+# 应用log配置
+conf_file = __file__.replace("log.py", "logging.conf")
+logging.config.fileConfig(conf_file)
 
 # 线程池: 延迟创建
 _executor = None
@@ -29,22 +26,35 @@ def executor():
     return _executor
 
 # 异步日志
-def debug(msg, *args, **kwargs):
-    executor().submit(logger.debug, msg, *args, **kwargs)
+class AsyncLogger(object):
 
-def info(msg, *args, **kwargs):
-    executor().submit(logger.info, msg, *args, **kwargs)
+    def __init__(self, name):
+        # 获得被代理的logger
+        logger = logging.getLogger(name)
+        self.logger = logger
 
-def warning(msg, *args, **kwargs):
-    executor().submit(logger.warning, msg, *args, **kwargs)
+    def debug(self, msg, *args, **kwargs):
+        executor().submit(self.logger.debug, msg, *args, **kwargs)
 
-def error(msg, *args, **kwargs):
-    executor().submit(logger.error, msg, *args, **kwargs)
+    def info(self, msg, *args, **kwargs):
+        executor().submit(self.logger.info, msg, *args, **kwargs)
 
-def critical(msg, *args, **kwargs):
-    executor().submit(logger.critical, msg, *args, **kwargs)
+    def warning(self, msg, *args, **kwargs):
+        executor().submit(self.logger.warning, msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        executor().submit(self.logger.error, msg, *args, **kwargs)
+
+    def critical(self, msg, *args, **kwargs):
+        executor().submit(self.logger.critical, msg, *args, **kwargs)
+
+# 获得异步日志
+def getLogger(name=None):
+    return AsyncLogger(name)
+
+# 默认日志
+log = getLogger("boot")
 
 if __name__ == '__main__':
-    debug("hello")
-    error("err", exc_info = Exception('unknow err'))
-    logger.error("err", exc_info = Exception('unknow err'))
+    log.debug("hello")
+    log.error("err", exc_info = Exception('unknow err'))
