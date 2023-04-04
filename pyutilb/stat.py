@@ -21,6 +21,8 @@ class Stat(object):
         self.actions = 0
         # 记录错误
         self.err = None
+        # 结束后的变量
+        self.vars = None
 
     @classmethod
     def start(cls):
@@ -34,6 +36,17 @@ class Stat(object):
         if isinstance(err, Exception):
             err = str(err)
         self.err = err
+        # 记录变量, 要去掉不关心的变量
+        self.vars = get_vars()
+        if 'boot' in self.vars:
+            del self.vars['boot']
+        if 'response' in self.vars:
+            del self.vars['response']
+        # 将统计结果输出到 result.yml
+        data = self.__dict__
+        del data['yaml_levels']
+        ret = yaml.dump(data)
+        write_file('stat.yml', ret)
 
     def incr_step(self):
         self.steps += 1
