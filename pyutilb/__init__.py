@@ -4,6 +4,8 @@ from . import ocr_youdao
 from . import ocr_baidu
 from .yaml_boot import YamlBoot, BreakException
 from .stat import Stat
+from .asyncio_threadpool import EventLoop1Thread, EventLoopThreadPool
+from .atomic import AtomicInteger, AtomicStarter
 
 __author__ = "shigebeyond"
 __version__ = "1.0.6"
@@ -19,5 +21,9 @@ __all__ = [
     "ocr_baidu",
     "YamlBoot",
     "BreakException",
-    "Stat"
+    "Stat",
+    "EventLoop1Thread",
+    "EventLoopThreadPool",
+    "AtomicInteger",
+    "AtomicStarter"
 ]
