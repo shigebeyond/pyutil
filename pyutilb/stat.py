@@ -43,29 +43,42 @@ class Stat(object):
         if 'response' in self.vars:
             del self.vars['response']
         # 将统计结果输出到 result.yml
-        data = self.__dict__
-        del data['yaml_levels']
+        data = self.to_dict()
         ret = yaml.dump(data)
         write_file('stat.yml', ret)
+        return self
 
+    # 转字典
+    def to_dict(self):
+        data = self.__dict__
+        if 'yaml_levels' in data:
+            del data['yaml_levels']
+        return data
+
+    # 步骤数+1
     def incr_step(self):
         self.steps += 1
+        return self
 
+    # 动作数+1
     def incr_action(self):
         self.actions += 1
+        return self
 
     # 开始执行一个yaml文件
     def enter_yaml(self, yaml):
         self.yamls += 1
-        i = self.add_yaml_node(yaml)  # 记录yaml文件
+        i = self._add_yaml_node(yaml)  # 记录yaml文件
         self.yaml_levels.append(i)  # 记录新层的下标
+        return self
 
     # 结束执行一个yaml文件
     def exit_yaml(self):
         self.yaml_levels.pop()  # 干掉本层
+        return self
 
     # 往yaml树中添加yaml节点
-    def add_yaml_node(self, yaml):
+    def _add_yaml_node(self, yaml):
         # 找到当前层的子节点
         children = self.yaml_tree
         for idx in self.yaml_levels:
