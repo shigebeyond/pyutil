@@ -395,6 +395,14 @@ def read_init_file_meta(init_file):
         meta = dict(items)
         return meta
 
+# 读远端url返回的json/yaml形式的变量
+def read_remote_vars(url):
+    #return read_yaml(option.dataurl)
+    txt = read_http_file(url)
+    if txt[0] == '{':
+        return json.loads(txt)
+    return yaml.load(txt, Loader=yaml.FullLoader)
+
 # 解析命令的选项与参数
 # :param name 命令名
 # :param version 版本
@@ -410,7 +418,7 @@ def parse_cmd(name, version):
     # optParser.add_option("-h", "--help", dest="help", action="store_true") # 默认自带help
     optParser.add_option('-v', '--version', dest='version', action="store_true", help = 'Show version number and quit')
     optParser.add_option("-d", "--data", dest="data", type="string", help="set variable data, eg: a=1&b=2")
-    optParser.add_option("-D", "--dataurl", dest="dataurl", type="string", help="set variable data from yaml url")
+    optParser.add_option("-D", "--dataurl", dest="dataurl", type="string", help="set variable data from yaml/json url")
     optParser.add_option("-f", "--funs", dest="funs", type="string", help="set custom functions file, eg: cf.py")
     optParser.add_option("-l", "--locustopt", dest="locustopt", type="string", help="locust options, eg: '--headless -u 10 -r 5 -t 20s --csv=result --html=report.html'")
 
@@ -432,9 +440,9 @@ def parse_cmd(name, version):
         data = query_string.parse(option.data)
         get_vars().update(data)
 
-    # 指定变量: 通过yaml url来指定, 该url返回变量的yaml
+    # 指定变量: 通过http url来指定, 该url返回yaml/json形式的变量
     if option.dataurl != None:
-        data = read_yaml(option.dataurl)
+        data = read_remote_vars(option.dataurl)
         log.debug(f"set variables: {data}")
         get_vars().update(data)
 
