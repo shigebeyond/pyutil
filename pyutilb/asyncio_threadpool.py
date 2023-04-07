@@ -3,7 +3,7 @@ from asyncio import coroutines
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pyutilb.atomic import *
-from .log import log
+from pyutilb.log import log
 
 # 运行event loop的单个线程
 class EventLoop1Thread(object):
@@ -22,22 +22,22 @@ class EventLoop1Thread(object):
 
     # 运行事件循环
     def _run_loop(self):
-        log.debug(self.name + ": event loop start")
+        log.debug("%s: event loop start", self.name)
         asyncio.set_event_loop(self.loop)
         self.loop.run_forever()  # 死循环，处理event loop
-        log.debug(self.name + ": event loop end")
+        log.debug("%s: event loop end", self.name)
 
     # submit()时才会递延创建与启动线程
     def _start_thread(self):
-        log.debug(self.name + ": start thread")
+        log.debug("%s: start thread", self.name)
         self.executor.submit(self._run_loop)
 
     # 停止事件循环，也会停止线程
     def shutdown(self):
-        log.debug(self.name + ": thread shutdown start")
+        log.debug("%s: thread shutdown start", self.name)
         self.loop.call_soon_threadsafe(self.loop.stop) # loop.stop()必须在call_soon_threadsafe()中调用(会发新的任务, 从而触发epoll信息), 否则无法会卡死在 EpollSelector.selectors.py.select()
         self.executor.shutdown()
-        log.debug(self.name + ": thread shutdown end")
+        log.debug("%s: thread shutdown end", self.name)
 
     # 添加任务(协程或回调函数), 返回future
     def exec(self, task, *args):
@@ -47,7 +47,7 @@ class EventLoop1Thread(object):
         # 2 将任务扔到event loop执行
         # 2.1 如果任务是函数调用
         if callable(task):
-            log.debug(f"{self.name}: execute task: {task.__qualname__}{args}")
+            log.debug(f"%s: execute function: %s%s", self.name, task.__qualname__, args)
             loop = self.loop
             def callback():
                 # 执行函数
@@ -60,6 +60,7 @@ class EventLoop1Thread(object):
 
         # 2.2 如果任务是协程/future等
         #if coroutines.iscoroutine(task):
+        log.debug(f"%s: execute coroutine: %s", self.name, task)
         return asyncio.run_coroutine_threadsafe(task, self.loop)
 
 
@@ -97,6 +98,7 @@ if __name__ == '__main__':
     pool = EventLoopThreadPool(3)
     for i in range(0, 40):
         pool.exec(test(i))
+        # pool.exec(test, i)
     time.sleep(4)
     print("over")
     pool.shutdown()
