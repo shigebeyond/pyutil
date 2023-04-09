@@ -35,7 +35,7 @@ class EventLoop1Thread(object):
     # 停止事件循环，也会停止线程
     def shutdown(self):
         log.debug("%s: thread shutdown start", self.name)
-        self.loop.call_soon_threadsafe(self.loop.stop) # loop.stop()必须在call_soon_threadsafe()中调用(会发新的任务, 从而触发epoll信息), 否则无法会卡死在 EpollSelector.selectors.py.select()
+        self.loop.call_soon_threadsafe(self.loop.stop) # loop.stop()必须在call_soon_threadsafe()中调用(会发新的任务, 从而触发epoll信息), 否则无法会卡死在 EpollSelector.selectors.select()
         self.executor.shutdown()
         log.debug("%s: thread shutdown end", self.name)
 

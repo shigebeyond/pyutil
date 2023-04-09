@@ -210,6 +210,19 @@ class YamlBoot(object):
         except ImportError:
             return False
 
+    # 执行一次的几率
+    # 一般用在 LocustBoot 中控制多接口用例的吞吐量比例
+    # :param steps 每个迭代中要执行的步骤
+    # :param percent 几率百分比, 0~100的整数
+    def probability(self, steps, percent = 0):
+        percent = int(percent)
+        if percent == 0:
+            return
+
+        # 如果随机数符合几率, 就执行子步骤; 否则不执行
+        if random.randint(1, 100) <= percent:
+            self.run_steps(steps)
+
     # for循环
     # :param steps 每个迭代中要执行的步骤
     # :param n 循环次数/循环列表变量名
