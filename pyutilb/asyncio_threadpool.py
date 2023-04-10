@@ -2,23 +2,22 @@ import asyncio
 from asyncio import coroutines
 import time
 from concurrent.futures import ThreadPoolExecutor
+from threading import Thread
+
 from pyutilb.atomic import *
 from pyutilb.log import log
 
+thread_counter = AtomicInteger(-1)
+
 # 运行event loop的单个线程
-class EventLoop1Thread(object):
+class EventLoopThread(object):
 
     # 构造函数: 接收 event loop
     def __init__(self):
         self.loop = asyncio.new_event_loop()
-        self.executor_starter = AtomicStarter() # 一次性创建线程
-        self.executor = ThreadPoolExecutor(max_workers=1) # submit()时才会递延创建与启动线程
-        self.executor._thread_name_prefix = self.executor._thread_name_prefix.replace('ThreadPoolExecutor', 'EventLoopThread') # 修正线程名前缀
-
-    @property
-    def name(self):
-        # return threading.current_thread().name # 不一定都是在本线程中打印本线程名
-        return self.executor._thread_name_prefix + '_0'
+        self.thread_starter = AtomicStarter() # 一次性创建线程
+        self.thread = None # submit()时才会递延创建与启动线程
+        self.name = "EventLoopThread_" + str(thread_counter.inc()) # 线程名
 
     # 运行事件循环
     def _run_loop(self):
@@ -30,19 +29,20 @@ class EventLoop1Thread(object):
     # submit()时才会递延创建与启动线程
     def _start_thread(self):
         log.debug("%s: start thread", self.name)
-        self.executor.submit(self._run_loop)
+        self.thread = Thread(name=self.name, target=self._run_loop)
+        self.thread.daemon = True
+        self.thread.start()
 
-    # 停止事件循环，也会停止线程
+    # 停止事件循环，也线程执行也会停止
     def shutdown(self):
         log.debug("%s: thread shutdown start", self.name)
         self.loop.call_soon_threadsafe(self.loop.stop) # loop.stop()必须在call_soon_threadsafe()中调用(会发新的任务, 从而触发epoll信息), 否则无法会卡死在 EpollSelector.selectors.select()
-        self.executor.shutdown()
         log.debug("%s: thread shutdown end", self.name)
 
     # 添加任务(协程或回调函数), 返回future
     def exec(self, task, *args):
         # 1 递延创建与启动线程
-        self.executor_starter.start_once(self._start_thread)
+        self.thread_starter.start_once(self._start_thread)
 
         # 2 将任务扔到event loop执行
         # 2.1 如果任务是函数调用
@@ -68,7 +68,7 @@ class EventLoop1Thread(object):
 class EventLoopThreadPool(object):
 
     def __init__(self, n_threads):
-        self.threads = list(map(lambda _: EventLoop1Thread(), range(0, n_threads)))
+        self.threads = list(map(lambda _: EventLoopThread(), range(0, n_threads)))
         self.idx = AtomicInteger(-1)
 
     # 添加协程任务, 返回future
@@ -86,15 +86,15 @@ class EventLoopThreadPool(object):
         for thread in self.threads:
             thread.shutdown()
 
-# 测试
-async def test(i):  # 测试的阻塞函数
-    print(f'call test({i})')
-    await asyncio.sleep(1)
-    # time.sleep(1)
-    name = threading.current_thread()
-    print(f"current thread: {name}; i = {i}")
-
 if __name__ == '__main__':
+    # 测试
+    async def test(i):  # 测试的阻塞函数
+        print(f'call test({i})')
+        await asyncio.sleep(1)
+        # time.sleep(1)
+        name = threading.current_thread().name
+        print(f"current thread: {name}; i = {i}")
+
     pool = EventLoopThreadPool(3)
     for i in range(0, 40):
         pool.exec(test(i))

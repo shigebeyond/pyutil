@@ -78,7 +78,7 @@ class VarParser(object):
         # 匹配
         ret = set()
         for reg in reg_exprs:
-            exprs = re.findall(rf'{reg}', txt) # 如果正则有分组, 则返回第一个分组的匹配结果, 否则返回整体正则匹配的结果
+            exprs = re.findall(rf'{reg}', txt) # 无分组返回整体的list, 有1个分组返回该分组的list, 有2个以上分组返回tuple(多分组)的list
             for expr in exprs:
                 var = self.parse_var(expr)
                 if var != None:
@@ -118,7 +118,7 @@ class VarParser(object):
     # 从yaml文本中解析include的文件
     def parse_includes(self, txt):
         reg = r"include\s*:([^#\n]+)"
-        exprs = re.findall(reg, txt) # 如果正则有分组, 则返回第一个分组的匹配结果, 否则返回整体正则匹配的结果
+        exprs = re.findall(reg, txt) # 无分组返回整体的list, 有1个分组返回该分组的list, 有2个以上分组返回tuple(多分组)的list
         # 不能用yield, 因为要2轮迭代, 而yield只能迭代一轮
         return set(map(lambda expr: expr.strip(' '), exprs)) # 去掉两头的空格
 
