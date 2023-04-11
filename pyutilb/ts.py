@@ -1,9 +1,15 @@
+import calendar
 import datetime
 import time
 
 # 今天
-def today():
-    return datetime.date.today()
+def today(full = False):
+    zero = datetime.date.today() # 0点
+    if full: # 23:59:59
+        #return zero + datetime.timedelta(hours=23, minutes=59, seconds=59) # zero是date类型, 加了后还是date类型, 即0点
+        return datetime.datetime.combine(zero, datetime.time.max)
+
+    return zero
 
 # 现在
 def now():
@@ -35,6 +41,26 @@ def iterate_date_round(start_date = None, round = 0, step = 1):
 def is_today(time):
     return now().date() == time.date() # 今天
 
+# 本周最后一天
+def lastday_of_week(date = None):
+    if date is None:
+        date = today()
+    return date + datetime.timedelta(6 - date.weekday())
+
+# 本月最后一天
+def lastday_of_month(date = None):
+    if date is None:
+        date = today()
+    _, days = calendar.monthrange(date.year, date.month) # 本月的最大天数
+    return datetime.date(date.year, date.month, days)
+
+# 上月最后一天
+def lastday_of_lastmonth(date = None):
+    if date is None:
+        date = today()
+    first = datetime.date(day=1, month=today.month, year=today.year) # 本月第一天
+    return first - datetime.timedelta(days=1) # 前一天=上月最后一天
+
 # 字符串转时间
 def str2date(str):
     if ' ' in str:
@@ -55,9 +81,7 @@ def timestamp2timestamp10(ts):
 
 # 将当前时间转换为时间字符串，默认为2017-10-01 13:37:04格式
 def now2str(format_string="%Y-%m-%d %H:%M:%S"):
-    ts = int(time.time())
-    arr = time.localtime(ts)
-    return time.strftime(format_string, arr)
+    return datetime.datetime.now().strftime(format_string)
 
 # 将10位时间戳转换为时间字符串，默认为2017-10-01 13:37:04格式
 def timestamp2str(ts, format_string="%Y-%m-%d %H:%M:%S"):
@@ -82,6 +106,8 @@ if __name__ == '__main__':
     time.sleep(5)
     test() # 2个test()的时间是一样的, 但不符合程序设计意图
     '''
+    print(today())
+    print(today(True))
     print("--- iterate_date_round(3日)")
     for date in iterate_date_round(round=3):
         print(date)
