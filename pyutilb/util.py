@@ -420,7 +420,8 @@ def parse_cmd(name, version):
     optParser.add_option("-d", "--data", dest="data", type="string", help="set variable data, eg: a=1&b=2")
     optParser.add_option("-D", "--dataurl", dest="dataurl", type="string", help="set variable data from yaml/json url")
     optParser.add_option("-f", "--funs", dest="funs", type="string", help="set custom functions file, eg: cf.py")
-    optParser.add_option("-l", "--locustopt", dest="locustopt", type="string", help="locust options, eg: '--headless -u 10 -r 5 -t 20s --csv=result --html=report.html'")
+    optParser.add_option("-l", "--locustopt", dest="locustopt", type="string", help="locust options in LocustBoot command, eg: '--headless -u 10 -r 5 -t 20s --csv=result --html=report.html'")
+    optParser.add_option("-c", "--autoclose", dest="autoclose", action="store_true", help="auto close when finish or exception")
 
     # 解析选项
     option, args = optParser.parse_args(args)
