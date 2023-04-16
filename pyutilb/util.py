@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
-import time
-import yaml
 import re
 import os
 import sys
@@ -10,86 +7,10 @@ import random
 import json
 from jsonpath import jsonpath
 import csv
-import requests
-from optparse import OptionParser
-import query_string
-
-from pyutilb.log import log
 from pyutilb.threadlocal import ThreadLocal
-from pyutilb.module_loader import load_module_funs
 import pandas as pd
 import threading
 
-# -------------------- 读写文件 ----------------------
-# 写文本文件
-def write_file(path, content, append = False):
-    if append:
-        mode = 'a'
-    else:
-        mode = 'w'
-    with open(path, mode, encoding="utf-8") as file:
-        file.write(content)
-
-# 读文本文件
-def read_file(path):
-    with open(path, 'r', encoding="utf-8") as file:
-        return file.read()
-
-# 写二进制文件
-def write_byte_file(path, content, append = False):
-    if append:
-        mode = 'ab'
-    else:
-        mode = 'wb'
-    with open(path, mode) as file:
-        file.write(content)
-
-# 读二进制文件
-def read_byte_file(path):
-    with open(path, 'rb') as file:
-        return file.read()
-
-# 读http文件内容
-def read_http_file(url):
-    res = requests.get(url)
-    if res.status_code == 404:
-        raise Exception(f"Remote file not exist: {url}")
-    if res.status_code != 200:
-        raise Exception(f"Fail to read remote file: {url} ")
-    # return res.content.decode("utf-8")
-    return res.text
-
-# 读yaml文件
-# :param yaml_file yaml文件，支持本地文件与http文件
-def read_yaml(yaml_file):
-    txt = read_local_or_http_file(yaml_file)
-    return yaml.load(txt, Loader=yaml.FullLoader)
-
-# 读yaml文件
-# :param json_file json文件，支持本地文件与http文件
-def read_json(json_file):
-    txt = read_local_or_http_file(json_file)
-    return json.loads(txt)
-
-# 读csv文件
-# :param csv_file csv文件，支持本地文件与http文件
-# :return pd.DataFrame
-def read_csv(csv_file):
-    return pd.read_csv(csv_file)
-
-# 是否是http文件
-def is_http_file(file):
-    return file.startswith('https://') or file.startswith('http://')
-
-# 本地文件或http文件
-def read_local_or_http_file(file):
-    if is_http_file(file):
-        txt = read_http_file(file)
-    else:
-        if not os.path.exists(file):
-            raise Exception(f"File not exist: {file}")
-        txt = read_file(file)
-    return txt
 
 # 输出异常
 def print_exception(ex):
@@ -386,85 +307,7 @@ def type2by(type):
 
     raise Exception(f"Invalid find type: {type}")
 
-# -------------------- 命令解析 ----------------------
-# 读 __init__ 文件中的元数据：author/version/description
-def read_init_file_meta(init_file):
-    with open(init_file, 'rb') as f:
-        text = f.read().decode('utf-8')
-        items = re.findall(r'__(\w+)__ = "(.+)"', text)
-        meta = dict(items)
-        return meta
-
-# 读远端url返回的json/yaml形式的变量
-def read_remote_vars(url):
-    #return read_yaml(option.dataurl)
-    txt = read_http_file(url)
-    if txt[0] == '{':
-        return json.loads(txt)
-    return yaml.load(txt, Loader=yaml.FullLoader)
-
-# 解析命令的选项与参数
-# :param name 命令名
-# :param version 版本
-# :return 命令参数
-def parse_cmd(name, version):
-    # py文件外的参数
-    args = sys.argv[1:]
-
-    usage = f'Usage: {name} [options...] <yaml_file1> <yaml_file2> <yaml_dir1> <yaml_dir2> ...'
-    optParser = OptionParser(usage)
-
-    # 添加选项规则
-    # optParser.add_option("-h", "--help", dest="help", action="store_true") # 默认自带help
-    optParser.add_option('-v', '--version', dest='version', action="store_true", help = 'Show version number and quit')
-    optParser.add_option("-d", "--data", dest="data", type="string", help="set variable data, eg: a=1&b=2")
-    optParser.add_option("-D", "--dataurl", dest="dataurl", type="string", help="set variable data from yaml/json url")
-    optParser.add_option("-f", "--funs", dest="funs", type="string", help="set custom functions file, eg: cf.py")
-    optParser.add_option("-l", "--locustopt", dest="locustopt", type="string", help="locust options in LocustBoot command, eg: '--headless -u 10 -r 5 -t 20s --csv=result --html=report.html'")
-    optParser.add_option("-c", "--autoclose", dest="autoclose", action="store_true", help="auto close when finish or exception")
-
-    # 解析选项
-    option, args = optParser.parse_args(args)
-
-    # 输出帮助文档 -- 默认自带help
-    # if option.help == True:
-    #     print(usage)
-    #     sys.exit(1)
-
-    # 输出版本
-    if option.version == True:
-        print(version)
-        sys.exit(1)
-
-    # 指定变量: 直接指定
-    if option.data != None:
-        data = query_string.parse(option.data)
-        get_vars().update(data)
-
-    # 指定变量: 通过http url来指定, 该url返回yaml/json形式的变量
-    if option.dataurl != None:
-        data = read_remote_vars(option.dataurl)
-        log.debug(f"set variables: {data}")
-        get_vars().update(data)
-
-    # 加载自定义函数
-    if option.funs != None:
-        global custom_funs
-        custom_funs = load_module_funs(option.funs)
-
-    # print(option)
-    # print(args)
-    return args, option
-
-# 抓取pypi.org上指定项目的版本
-def fetch_pypi_project_version(project):
-    html = read_http_file(f"https://pypi.org/project/{project}")
-    # mat = re.search('<h1 class="package-header__name">(.+)</h1>', html)
-    mat = re.search(f'package-header__name">\s*{project} ([\d\.]+)', html)
-    if mat == None:
-        return None
-    return mat.group(1)
-
+# -------------------- 解析范围 ----------------------
 # 解析范围表达式，如[1,3]
 def parse_range(str):
     # 找到范围表达式，如[1,3]
@@ -500,13 +343,3 @@ if __name__ == '__main__':
     print(do_replace_var('hello, ${name}'))
     print(do_replace_var('$name'))
     '''
-    '''
-    rows = read_csv('/home/shi/tk.csv')
-    print(rows)
-    for r in rows:
-        print(r['uid'])
-        print(jsonpath(r, '$.token'))
-   '''
-    project = 'AppiumBoot'
-    version = fetch_pypi_project_version(project)
-    print(f"{project} = {version}")

@@ -1,4 +1,5 @@
 from . import util
+from . import cmd
 from . import log
 from . import ocr_youdao
 from . import ocr_baidu
@@ -17,6 +18,7 @@ __all__ = [
     "__version__",
     "__description__",
     "util",
+    "cmd",
     "log",
     "ocr_youdao",
     "ocr_baidu",

@@ -3,6 +3,7 @@
 
 import datetime
 from pyutilb.util import *
+from pyutilb.file import *
 
 # 对测试进行统计
 class Stat(object):

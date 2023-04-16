@@ -3,6 +3,7 @@
 
 from pyutilb.log import log
 from pyutilb.util import *
+from pyutilb.file import *
 
 '''
 从boot yaml中解析出用到的变量名，以便给自动化测试平台使用；

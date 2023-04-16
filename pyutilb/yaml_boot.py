@@ -4,6 +4,7 @@
 import fnmatch
 from pyutilb.log import log
 from pyutilb.util import *
+from pyutilb.file import *
 from pyutilb.stat import Stat
 
 # 跳出循环的异常
@@ -48,6 +49,10 @@ class YamlBoot(object):
     def add_actions(self, actions: dict):
         self.actions = {**self.actions, **actions}
 
+    # 执行完的后置处理, 要在统计扫尾前调用
+    def on_end(self):
+        pass
+
     '''
     执行入口
     :param step_files 步骤配置文件或目录的列表
@@ -57,6 +62,8 @@ class YamlBoot(object):
         try:
             # 真正的执行
             self.do_run(step_files)
+
+            self.on_end() # 执行完的后置处理, 要在统计扫尾前调用
 
             self.stat.end()
             return self.stat
