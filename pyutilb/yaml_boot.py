@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-
+import asyncio
 import fnmatch
+import time
 from pyutilb.log import log
 from pyutilb.util import *
 from pyutilb.file import *
@@ -302,6 +303,7 @@ class YamlBoot(object):
     def sleep(self, seconds):
         seconds = replace_var(seconds)  # 替换变量
         time.sleep(int(seconds))
+        # await asyncio.sleep(int(seconds)) # 改为协程：整个调用栈都需要调整，当有迫切需求时才做
 
     # 打印
     def print(self, msg):

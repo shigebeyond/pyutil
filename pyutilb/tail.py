@@ -1,12 +1,17 @@
 # python实现tail
-# 参考: https://www.cnblogs.com/bufferfly/p/4878688.html
+# 参考: https://github.com/kasun/python-tail/blob/master/tail.py
 # 改进: 使用 asyncio
+import asyncio
 import os
 import sys
 import time
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+
 class Tail(object):
     """
+    python 实现类似 linux 的tail功能，可以订阅文件内容的增加
     Python-Tail - Unix tail follow implementation in Python.
     python-tail can be used to monitor changes to a file.
     Example:
@@ -25,31 +30,36 @@ class Tail(object):
     """
 
     ''' Represents a tail command. '''
-    def __init__(self, path):
+    def __init__(self, path, scheduler: AsyncIOScheduler = None):
         ''' Initiate a Tail instance.
             Check for file validity, assigns callback function to standard out.
 
             Arguments:
-                path - File to be followed. '''
-        self.check_filevalid(path)
-        self.path = path
-        self.callback = sys.stdout.write
-        self.try_count = 0
-
+                path - File to be followed.
+                scheduler - AsyncIOScheduler.
+        '''
+        # 文件
+        self.path = self.check_file_valid(path)
         self.file = open(self.path, "r")
-        self.size = os.path.getsize(self.path) # 记录当前文件大小, 只是为了识别文件被清空或日志分割的情况, 只需要对比 最新文件大小 > self.size
-
+        self.size = os.path.getsize(self.path)  # 记录当前文件大小, 只是为了识别文件被清空或日志分割的情况, 只需要对比 最新文件大小 > self.size
         # Go to the end of file
         self.file.seek(0, 2)
 
-    def check_filevalid(self, file):
+        # 定时器
+        self.scheduler = scheduler
+
+        # 回调
+        self.callback = sys.stdout.write
+
+    def check_file_valid(self, path):
         """ Check whether the a given file exists, readable and is a file """
-        if not os.access(file, os.F_OK):
-            raise Exception("File '%s' does not exist" % (file))
-        if not os.access(file, os.R_OK):
-            raise Exception("File '%s' not readable" % (file))
-        if os.path.isdir(file):
-            raise Exception("File '%s' is a directory" % (file))
+        if not os.access(path, os.F_OK):
+            raise Exception("File '%s' does not exist" % (path))
+        if not os.access(path, os.R_OK):
+            raise Exception("File '%s' not readable" % (path))
+        if os.path.isdir(path):
+            raise Exception("File '%s' is a directory" % (path))
+        return path
 
     def reload_file(self):
         """ Reload tailed file when it be empty be `echo "" > tailed file`, or segmentated by logrotate.
@@ -58,36 +68,48 @@ class Tail(object):
         try:
             self.file = open(self.path, "r")
             self.size = os.path.getsize(self.path)
-
             # Go to the head of file
             self.file.seek(0, 1)
-
             return True
         except:
             return False
 
-    def follows(self, interval=0.01):
+    def follow(self, callback = None, interval=1):
         """ Do a tail follow. If a callback function is registered it is called with every new line.
         Else printed to standard out.
 
         Arguments:
+            callback - Overrides default callback function to provided function.
             interval - Number of seconds to wait between each iteration; Defaults to 1.
         """
+        if callback is not None:
+            self.callback = callback
 
-        while True:
-            self.follow_once()
-            time.sleep(interval)
+        # 1 同步阻塞sleep实现定时
+        # while True:
+        #     self.read_line()
+        #     time.sleep(interval)
 
-    def follow_once(self):
+        # 2 异步协程实现定时
+        # 没有定时器，则自己创建一个
+        self_sheduler = self.scheduler is None
+        if self_sheduler:
+            self.scheduler = AsyncIOScheduler()
+            self.scheduler.start()
+
+        # 添加定时任务
+        self.scheduler.add_job(self.read_line, 'interval', seconds=interval, id=f'tail:{self.path}')
+
+        # 启动定时事件循环
+        if self_sheduler:
+            asyncio.get_event_loop().run_forever()
+
+    def read_line(self):
         self.check_file_size()
-        # 当前位置
-        curr_position = self.file.tell()
         # 读行
-        lines = self.file.readline()
-        # if not lines:
-        #     self.file.seek(curr_position)
+        line = self.file.readline()
         # 回调
-        for line in lines:
+        if line and line != "\n": # 忽略空+换行符
             self.callback(line)
 
     def check_file_size(self):
@@ -111,17 +133,10 @@ class Tail(object):
             raise Exception("Open %s failed after try 10 times" % self.path)
 
 
-    def register_callback(self, func):
-        """ Overrides default callback function to provided function. """
-        self.callback = func
-
 if __name__ == '__main__':
     t = Tail("/home/shi/test/a.txt")
     def print_msg(msg):
-        print(msg)
-
-    t.register_callback(print_msg)
-
-    t.follows()
+        print("捕获一行：" + msg)
+    t.follow(print_msg)
 
 """ vim: set ts=4 sw=4 sts=4 tw=100 et: """

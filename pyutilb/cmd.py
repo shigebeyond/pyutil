@@ -78,6 +78,15 @@ def fetch_pypi_project_version(project):
         return None
     return mat.group(1)
 
+# 同步执行命令
+def run_command(cmd):
+    return os.popen(cmd).read()
+
+# 同步执行命令，并将输出整理为df
+def run_command_return_dataframe(cmd):
+    output = run_command(cmd)
+    return cmd_output2dataframe(output)
+
 # 异步执行命令
 async def run_command_async(cmd, shell = True):
     #log.debug(f'Run command: {cmd}')
@@ -101,13 +110,11 @@ async def run_command_async(cmd, shell = True):
         #log.debug(f'[stderr]\n{stderr.decode()}')
         raise Exception(f"Fail to run command `{cmd}`: \n{stderr.decode()}")
 
-# 同步执行命令
-def run_command(cmd):
-    return os.popen(cmd).read()
+    return stdout
 
-# 同步执行命令
-def run_command_return_dataframe(cmd):
-    output = os.popen(cmd).read()
+# 异步执行命令，并将输出整理为df
+async def run_command_return_dataframe_async(cmd):
+    output = await run_command_async(cmd)
     return cmd_output2dataframe(output)
 
 # 根据grep模式来获得进程id
