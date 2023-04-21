@@ -118,7 +118,11 @@ async def run_command_return_dataframe_async(cmd):
     return cmd_output2dataframe(output)
 
 # 根据grep模式来获得进程id
-def get_pid_by_grep(*greps):
+# :param grep 关键字，支持多个，用|分割
+def get_pid_by_grep(grep):
+    # 关键字，支持多个，用|分割
+    # greps = grep.split('|')
+    greps = re.split(r' *\| *', grep)
     # 如 ps -ef | grep 'java' | grep 'com.jetbrains.www.pychar' | grep -v grep |awk '{print $2}'
     greps = [f"grep '{p}'" for p in greps]
     cmd = "ps -ef | " + ' | '.join(greps) + " | grep -v grep | awk '{print $2}'"
