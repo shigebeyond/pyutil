@@ -87,19 +87,27 @@ def run_command_return_dataframe(cmd):
     output = run_command(cmd)
     return cmd_output2dataframe(output)
 
+# 将命令扔到事件循环(的线程)中执行
+def run_command_in_loop(cmd, shell = True, loop=None):
+    task = run_command_async(cmd, shell, loop)
+    return asyncio.run_coroutine_threadsafe(task, loop)
+
 # 异步执行命令
-async def run_command_async(cmd, shell = True):
+async def run_command_async(cmd, shell = True, loop=None):
     #log.debug(f'Run command: {cmd}')
     if shell:
         proc = await asyncio.create_subprocess_shell(
             cmd,
+            loop=loop,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
     else:
         args = cmd.split(" ")
         proc = await asyncio.create_subprocess_exec(
             *args,
-            stdout=asyncio.subprocess.PIPE)
+            loop=loop,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE)
 
     stdout, stderr = await proc.communicate()
 
