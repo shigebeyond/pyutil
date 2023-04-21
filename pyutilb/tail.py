@@ -4,8 +4,9 @@
 import asyncio
 import os
 import sys
+import threading
 import time
-
+from apscheduler.util import iscoroutinefunction_partial
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
@@ -104,13 +105,16 @@ class Tail(object):
         if self_sheduler:
             asyncio.get_event_loop().run_forever()
 
-    def read_line(self):
+    async def read_line(self):
         self.check_file_size()
         # 读行
         line = self.file.readline()
         # 回调
         if line and line != "\n": # 忽略空+换行符
-            self.callback(line)
+            if iscoroutinefunction_partial(self.callback):
+                await self.callback(line)
+            else:
+                self.callback(line)
 
     def check_file_size(self):
         size2 = os.path.getsize(self.path)
@@ -135,8 +139,15 @@ class Tail(object):
 
 if __name__ == '__main__':
     t = Tail("/home/shi/test/a.txt")
+    '''
     def print_msg(msg):
         print("捕获一行：" + msg)
+    t.follow(print_msg)
+    '''
+    async def print_msg(msg):
+        await asyncio.sleep(0.1)
+        name = threading.current_thread() # MainThread
+        print(f"thread [{name}] 捕获一行：{msg}")
     t.follow(print_msg)
 
 """ vim: set ts=4 sw=4 sts=4 tw=100 et: """
