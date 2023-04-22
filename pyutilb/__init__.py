@@ -1,6 +1,7 @@
 from . import util
 from . import cmd
 from . import log
+from . import lazy
 from . import ocr_youdao
 from . import ocr_baidu
 from .yaml_boot import YamlBoot, BreakException
@@ -20,6 +21,7 @@ __all__ = [
     "util",
     "cmd",
     "log",
+    "lazy",
     "ocr_youdao",
     "ocr_baidu",
     "YamlBoot",

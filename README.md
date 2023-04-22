@@ -10,3 +10,4 @@
 6. threadlocal: 封装ThreadLocal
 7. atomic: 封装AtomicInteger/AtomicStarter
 8. asyncio_threadpool: 封装执行协程的线程池
+9. lazy: 封装延迟创建的对象

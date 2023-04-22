@@ -2,6 +2,7 @@ import asyncio
 from asyncio import coroutines
 import time
 from concurrent.futures import ThreadPoolExecutor
+from functools import wraps
 from threading import Thread
 
 from pyutilb.atomic import *
@@ -74,6 +75,14 @@ class EventLoopThreadPool(object):
     # 添加协程任务, 返回future
     def exec(self, task, *args):
         return self.next_thread().exec(task, *args)
+
+    # 包装方法的装饰器
+    def run_in_pool(self, func):
+        @wraps(func)
+        def wrapper(*args):
+            return self.exec(*args)
+
+        return wrapper
 
     # 获得下一个线程
     def next_thread(self):
