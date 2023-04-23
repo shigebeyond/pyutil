@@ -33,6 +33,7 @@ class YamlBoot(object):
             'exec': self.exec,
             'proc': self.proc,
             'call': self.call,
+            'exit': exit,
         }
         set_var('boot', self)
         # 当前文件

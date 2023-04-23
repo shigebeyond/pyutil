@@ -80,7 +80,7 @@ class EventLoopThreadPool(object):
     def run_in_pool(self, func):
         @wraps(func)
         def wrapper(*args):
-            return self.exec(*args)
+            return self.exec(func, *args)
 
         return wrapper
 
