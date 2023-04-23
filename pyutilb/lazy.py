@@ -1,5 +1,4 @@
 from concurrent.futures.thread import ThreadPoolExecutor
-from pyutilb import EventLoopThreadPool, SchedulerThread
 
 # 延迟计算(创建)属性装饰器: 使用 @lazyproperty 实例来代理目标对象属性的读取
 class lazyproperty:
@@ -28,8 +27,10 @@ class LazyThreads(object):
 
     @lazyproperty
     def asyncio_thread_pool(self):
+        from pyutilb import EventLoopThreadPool # fix 循环引用，直接放在方法里
         return EventLoopThreadPool(self.thread_num) # 协程线程池
 
     @lazyproperty
     def asyncio_apscheduler_thread(self):
+        from pyutilb import SchedulerThread # fix 循环引用，直接放在方法里
         return SchedulerThread() # 定时器的线程

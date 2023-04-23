@@ -168,16 +168,17 @@ def get_ip():
     return _ip
 
 # 根据空格来分割字符串
-def split_by_space(line):
-    return re.split("\s+", line.strip())
+def split_by_space(line, maxsplit=0):
+    return re.split("\s+", line.strip(), maxsplit)
 
 # 命令行输出转表格
 def cmd_output2dataframe(out):
     lines = out.strip().split("\n")
     # 表头行
     columns = split_by_space(lines[0])
+    maxsplit = len(columns) - 1 # maxsplit = 列数 - 1
     # 数据行
-    data = [split_by_space(line) for line in lines[1:]]
+    data = [split_by_space(line, maxsplit) for line in lines[1:]]
     return pd.DataFrame(data,columns=columns)
 
 if __name__ == '__main__':
