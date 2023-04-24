@@ -4,7 +4,6 @@ import os
 import re
 import socket
 import sys
-
 import pandas as pd
 import requests
 import query_string
@@ -14,6 +13,7 @@ from pyutilb.file import read_http_file, read_remote_vars
 from pyutilb.log import log
 from pyutilb.file import read_http_file
 from pyutilb.log import log
+from pyutilb.strs import substr_after_lines
 from pyutilb.util import get_vars
 
 # 解析命令的选项与参数
@@ -118,7 +118,7 @@ async def run_command_async(cmd, shell = True, loop=None):
         #log.debug(f'[stderr]\n{stderr.decode()}')
         raise Exception(f"Fail to run command `{cmd}`: \n{stderr.decode()}")
 
-    return stdout
+    return stdout.decode()
 
 # 异步执行命令，并将输出整理为df
 async def run_command_return_dataframe_async(cmd):
@@ -172,7 +172,10 @@ def split_by_space(line, maxsplit=0):
     return re.split("\s+", line.strip(), maxsplit)
 
 # 命令行输出转表格
-def cmd_output2dataframe(out):
+# :param from_nline 从第几行开始
+def cmd_output2dataframe(out, from_nline = 0):
+    if from_nline > 0:
+        out = substr_after_lines(out, from_nline)
     lines = out.strip().split("\n")
     # 表头行
     columns = split_by_space(lines[0])

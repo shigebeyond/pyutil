@@ -51,7 +51,7 @@ class EventLoopThread(object):
             log.debug(f"%s: execute function: %s%s", self.name, task.__qualname__, args)
             loop = self.loop
             def callback():
-                # 执行函数
+                # 执行函数 -- 可以做捕获异常，但只能针对普通函数，不能针对协程函数，因为协程函数执行返回的是一个协程代理对象，并非马上执行，只有在await时才执行
                 ret = task(*args)
                 # 如果返回值是协程, 则还要扔到队列中
                 if coroutines.iscoroutine(ret):
