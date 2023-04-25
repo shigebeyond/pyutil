@@ -21,6 +21,8 @@ class YamlBoot(object):
         self.step_dir = None
         # 动作映射函数
         self.actions = {
+            'exit': exit,
+            'debug': self.set_debug,
             'sleep': self.sleep,
             'print': self.print,
             'for': self.do_for,
@@ -33,7 +35,6 @@ class YamlBoot(object):
             'exec': self.exec,
             'proc': self.proc,
             'call': self.call,
-            'exit': exit,
         }
         set_var('boot', self)
         # 当前文件
@@ -42,6 +43,8 @@ class YamlBoot(object):
         self.procs = {}
         # 统计
         self.stat = Stat.start()
+        # 调试
+        self.debug = False
 
     # 添加单个动作
     def add_action(self, name: str, callback: str):
@@ -186,6 +189,12 @@ class YamlBoot(object):
             func(param)
 
     # --------- 动作处理的函数 --------
+    # 设置调试模式
+    def set_debug(self, f):
+        if f is None:
+            f = True
+        self.debug = f
+
     # 解析动作名for(n)中的n: 或数字或列表
     def parse_for_n(self, n):
         if n is None or n == '':

@@ -14,7 +14,7 @@ file_size_units = "BKMGT";
 # @param unit
 # @return int
 def file_size_unit2bytes(unit):
-    i = file_size_units.indexOf(unit);
+    i = file_size_units.find(unit);
     if i == -1:
         raise Exception(f"无效文件大小单位: {unit}");
     return 1024.0 ** i
@@ -31,9 +31,12 @@ def file_size2bytes(sizeStr):
 # @param bytes
 # @param unit
 # @return str
-def bytes2file_size(bytes, unit):
+def bytes2file_size(bytes, unit, print_unit = True):
     size = bytes / file_size_unit2bytes(unit)
-    return '%.2f' % size + unit
+    size = '%.4f' % size
+    if print_unit:
+        return size + unit
+    return size
 
 # -------------------- 读写文件 ----------------------
 # 写文本文件
