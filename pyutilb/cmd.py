@@ -14,7 +14,7 @@ from pyutilb.log import log
 from pyutilb.file import read_http_file
 from pyutilb.log import log
 from pyutilb.strs import substr_after_lines
-from pyutilb.util import get_vars
+from pyutilb.util import set_vars
 
 # 解析命令的选项与参数
 # :param name 命令名
@@ -52,13 +52,13 @@ def parse_cmd(name, version):
     # 指定变量: 直接指定
     if option.data != None:
         data = query_string.parse(option.data)
-        get_vars().update(data)
+        set_vars(data)
 
     # 指定变量: 通过http url来指定, 该url返回yaml/json形式的变量
     if option.dataurl != None:
         data = read_remote_vars(option.dataurl)
         log.debug(f"set variables: {data}")
-        get_vars().update(data)
+        set_vars(data)
 
     # 加载自定义函数
     if option.funs != None:

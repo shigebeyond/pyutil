@@ -300,9 +300,12 @@ class YamlBoot(object):
         self.run_1file(step_file, True)
 
     # 设置变量
-    def set_vars(self, vars):
+    # :param to_str 是否转为字符串, 否则原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量; 只针对整体匹配的情况
+    def set_vars(self, vars, to_str = True):
+        if isinstance(to_str, str):
+            to_str = to_str.lower() == 'true'
         for k, v in vars.items():
-            v = replace_var(v)  # 替换变量
+            v = replace_var(v, to_str)  # 替换变量
             set_var(k, v)
 
     # 打印变量

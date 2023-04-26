@@ -20,10 +20,6 @@ def print_exception(ex):
 # 变量: vars
 vars = ThreadLocal(lambda : {})
 
-# 设置变量
-def set_var(name, val):
-    get_vars()[name] = val
-
 # 获取全部变量
 def get_vars():
     return vars.get()
@@ -38,6 +34,33 @@ def get_var(name, throw_key_exception = True):
         return None
 
     return get_vars()[name]
+
+# 设置单个变量
+def set_var(name, val):
+    get_vars()[name] = val
+
+# 设置多个变量
+def set_vars(vals):
+    get_vars().update(vals)
+
+# 清理多个变量
+def clear_vars(names):
+    if isinstance(names, dict):
+        names = names.keys()
+    for name in names:
+        set_var(name, None)
+
+# 实现with语句，自动实现变量的设置与清理
+class UseVars(object):
+    def __init__(self, vars):
+        self._vars = vars
+
+    def __enter__(self):
+        set_vars(self._vars)
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        clear_vars(self._vars)
 
 # -------------------- 系统函数 ----------------------
 base_str = 'ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789'
