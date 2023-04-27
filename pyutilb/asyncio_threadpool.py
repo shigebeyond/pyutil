@@ -1,5 +1,5 @@
 import asyncio
-from asyncio import coroutines
+from asyncio import coroutines, get_running_loop
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
@@ -12,13 +12,14 @@ thread_counter = AtomicInteger(-1)
 
 # 运行event loop的单个线程
 class EventLoopThread(object):
+    thread_name_pref = "EventLoopThread_"
 
     # 构造函数: 接收 event loop
     def __init__(self):
         self.loop = asyncio.new_event_loop()
         self.thread_starter = AtomicStarter() # 一次性创建线程
         self.thread = None # submit()时才会递延创建与启动线程
-        self.name = "EventLoopThread_" + str(thread_counter.inc()) # 线程名
+        self.name = EventLoopThread.thread_name_pref + str(thread_counter.inc()) # 线程名
 
     # 运行事件循环
     def _run_loop(self):

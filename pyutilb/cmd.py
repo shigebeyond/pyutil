@@ -93,19 +93,20 @@ def run_command_in_loop(cmd, shell = True, loop=None):
     return asyncio.run_coroutine_threadsafe(task, loop)
 
 # 异步执行命令
-async def run_command_async(cmd, shell = True, loop=None):
+# 最好是在python3.9上执行，否则会遇到以下问题: Cannot add child handler, the child watcher does not have a loop attached
+async def run_command_async(cmd, shell = True):
     #log.debug(f'Run command: {cmd}')
     if shell:
         proc = await asyncio.create_subprocess_shell(
             cmd,
-            loop=loop,
+            #loop=loop, # python3.9以上不需要传递loop参数，否则报错 BaseSubprocessTransport.__init__() got multiple values for argument 'loop'
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
     else:
         args = cmd.split(" ")
         proc = await asyncio.create_subprocess_exec(
             *args,
-            loop=loop,
+            #loop=loop,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
 

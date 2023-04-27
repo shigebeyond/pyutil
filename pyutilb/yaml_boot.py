@@ -166,6 +166,7 @@ class YamlBoot(object):
     执行单个动作：就是调用动作名对应的函数
     :param action 动作名
     :param param 参数
+    :return 有返回值，以便处理协程方法
     '''
     def run_action(self, action, param):
         log.debug(f"handle action: {action}={param}")
@@ -184,9 +185,9 @@ class YamlBoot(object):
         # 调用动作对应的函数
         func = self.actions[action]
         if has_other_arg: # 其他参数: 多加了个参数，如循环变量n
-            func(param, n)
+            return func(param, n)
         else:
-            func(param)
+            return func(param)
 
     # --------- 动作处理的函数 --------
     # 设置调试模式
