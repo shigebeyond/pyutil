@@ -10,6 +10,13 @@ from pyutilb.log import log
 
 thread_counter = AtomicInteger(-1)
 
+# 获得当前运行的loop
+def get_running_loop():
+    try:
+        return asyncio.get_running_loop()
+    except RuntimeError as e:
+        return None
+
 # 运行event loop的单个线程
 class EventLoopThread(object):
     thread_name_pref = "EventLoopThread_"

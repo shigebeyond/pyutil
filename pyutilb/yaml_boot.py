@@ -3,6 +3,8 @@
 import asyncio
 import fnmatch
 import time
+
+from pyutilb.cmd import run_command
 from pyutilb.log import log
 from pyutilb.util import *
 from pyutilb.file import *
@@ -326,7 +328,7 @@ class YamlBoot(object):
 
     # 执行命令
     def exec(self, cmd):
-        output = os.popen(cmd).read()
+        output = run_command(cmd)
         log.debug(f"execute commmand: {cmd} | result: {output}")
 
     # 定义过程, 可包含多个子步骤

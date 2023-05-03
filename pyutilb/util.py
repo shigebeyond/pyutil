@@ -41,10 +41,13 @@ def set_var(name, val):
 
 # 设置多个变量
 def set_vars(vals):
-    get_vars().update(vals)
+    if vals:
+        get_vars().update(vals)
 
 # 清理多个变量
 def clear_vars(names):
+    if not names:
+        return
     if isinstance(names, dict):
         names = names.keys()
     for name in names:

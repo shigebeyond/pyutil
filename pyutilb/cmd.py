@@ -92,10 +92,17 @@ def run_command_in_loop(cmd, shell = True, loop=None):
     task = run_command_async(cmd, shell, loop)
     return asyncio.run_coroutine_threadsafe(task, loop)
 
-# 异步执行命令
-# 最好是在python3.9上执行，否则会遇到以下问题: Cannot add child handler, the child watcher does not have a loop attached
-async def run_command_async(cmd, shell = True):
+async def run_command_async(cmd, shell = True, wait_output = True):
+    '''
+    异步执行命令
+        最好是在python3.9上执行，否则会遇到以下问题: Cannot add child handler, the child watcher does not have a loop attached
+    :param cmd: 要执行的命令
+    :param shell: 是否shell方式执行
+    :param wait_output: 是否等待输出，不等待则立即返回，防止调用线程被阻塞
+    :return:
+    '''
     #log.debug(f'Run command: {cmd}')
+    # 1 执行命令
     if shell:
         proc = await asyncio.create_subprocess_shell(
             cmd,
@@ -109,6 +116,10 @@ async def run_command_async(cmd, shell = True):
             #loop=loop,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE)
+
+    # 2 等待输出
+    if not wait_output:
+        return None
 
     stdout, stderr = await proc.communicate()
 
