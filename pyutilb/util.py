@@ -7,10 +7,10 @@ import random
 import json
 from jsonpath import jsonpath
 import csv
+from pyutilb import ts
 from pyutilb.threadlocal import ThreadLocal
 import pandas as pd
 import threading
-
 
 # 输出异常
 def print_exception(ex):
@@ -69,6 +69,10 @@ class UseVars(object):
         clear_vars(self._vars)
 
 # -------------------- 系统函数 ----------------------
+# 获得当前时间字符串
+def now(_):
+    return ts.now2str()
+
 base_str = 'ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789'
 # 生成一个指定长度的随机字符串
 def random_str(n):
@@ -234,6 +238,7 @@ def parse_df_prop(expr):
 # 替换变量时用到的函数
 # 系统函数
 sys_funcs = {
+    'now': now,
     'random_str': random_str,
     'random_int': random_int,
     'random_element': random_element,
