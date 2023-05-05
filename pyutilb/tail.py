@@ -31,7 +31,7 @@ class Tail(object):
     """
 
     ''' Represents a tail command. '''
-    def __init__(self, path, scheduler: AsyncIOScheduler = None):
+    def __init__(self, path, scheduler: AsyncIOScheduler = None, from_end = True):
         ''' Initiate a Tail instance.
             Check for file validity, assigns callback function to standard out.
 
@@ -44,7 +44,8 @@ class Tail(object):
         self.file = open(self.path, "r")
         self.size = os.path.getsize(self.path)  # 记录当前文件大小, 只是为了识别文件被清空或日志分割的情况, 只需要对比 最新文件大小 > self.size
         # Go to the end of file
-        self.file.seek(0, 2)
+        if from_end:
+            self.file.seek(0, 2)
 
         # 定时器
         self.scheduler = scheduler
@@ -106,7 +107,7 @@ class Tail(object):
             asyncio.get_event_loop().run_forever()
 
     async def read_line(self):
-        self.check_file_size()
+        await self.check_file_size()
         # 读行
         line = self.file.readline()
         # 回调
@@ -116,7 +117,7 @@ class Tail(object):
             else:
                 self.callback(line)
 
-    def check_file_size(self):
+    async def check_file_size(self):
         size2 = os.path.getsize(self.path)
         # 1 正常, 文件在追加: 最新文件大小 > self.size
         if size2 >= self.size:
@@ -124,16 +125,19 @@ class Tail(object):
             return
 
         # 2 异常, 文件被清空或日志分割
-        while self.try_count < 10:
-            if not self.reload_file():  # 从头开始
-                self.try_count += 1
-            else:
-                self.try_count = 0
+        try_count = 0
+        while try_count < 10:
+            # 尝试从头开始
+            if self.reload_file(): # 成功则跳出
+                try_count = 0
                 self.size = os.path.getsize(self.path)
                 break
-            time.sleep(0.1)
 
-        if self.try_count == 10:
+            # 失败则重试
+            try_count += 1
+            await asyncio.sleep(0.1)
+
+        if try_count == 10:
             raise Exception("Open %s failed after try 10 times" % self.path)
 
 

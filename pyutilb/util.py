@@ -21,8 +21,11 @@ def print_exception(ex):
 vars = ThreadLocal(lambda : {})
 
 # 获取全部变量
-def get_vars():
-    return vars.get()
+def get_vars(copy = False):
+    ret = vars.get()
+    if copy:
+        return ret.copy()
+    return ret
 
 # 获取单个变量
 # :param name 变量名
