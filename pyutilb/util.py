@@ -288,6 +288,21 @@ def call_func(name, params):
     # 调用函数
     return func(*params)
 
+# -------------------- pandas扩展 ----------------------
+# 任意值转df
+def val2df(val):
+    if not isinstance(val, pd.DataFrame):
+        if not isinstance(val, (list, tuple, set)):
+            raise Exception(f"值不是DataFrame或list或tuple或set: {val}")
+        # list转DataFrame
+        if len(val) == 0:  # 空
+            val = pd.DataFrame()
+        else:
+            fields = val[0].keys()
+            val = pd.DataFrame(val, columns=fields)
+
+    return val
+
 # -------------------- selenium/appium用到的函数 ----------------------
 # 分离xpath与属性
 def split_xpath_and_prop(path):

@@ -95,6 +95,13 @@ def read_json(json_file):
 def read_csv(csv_file):
     return pd.read_csv(csv_file)
 
+# 读excel文件
+# :param excel_file excel文件，支持本地文件与http文件
+# :param sheet_name sheet名
+# :return pd.DataFrame
+def read_excel(excel_file, sheet_name):
+    return pd.read_excel(excel_file, sheet_name)
+
 # 是否是http文件
 def is_http_file(file):
     return file.startswith('https://') or file.startswith('http://')
