@@ -194,7 +194,7 @@ def do_replace_var(txt, to_str = True, replace = replace_pure_var_expr):
 
     # 1 整体匹配: 整个是纯变量表达式
     for reg in reg_exprs:
-        mat = re.match(rf'{reg}', txt)
+        mat = re.match(rf'{reg}$', txt) # match是从头开始匹配，但管头不管尾，因此要加上 $
         if mat:
             return replace(mat, to_str)
 
