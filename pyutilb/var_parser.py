@@ -48,12 +48,12 @@ class VarParser(object):
         # 解析用到的变量
         vars = self.parse_vars(txt)
         self.vars |= vars
-        log.debug(f"解析[{step_file}]用到的变量: " + ','.join(vars))
+        log.debug(f"解析[%s]用到的变量: %s", step_file, vars)
         # 解析设置的变量
         steps = yaml.load(txt, Loader=yaml.FullLoader)
         vars_set = self.parse_vars_set(steps)
         self.vars_set |= vars_set
-        log.debug(f"解析[{step_file}]设置的变量: " + ','.join(vars_set))
+        log.debug(f"解析[%s]设置的变量: %s", step_file, vars_set)
         # 解析include
         includes = self.parse_includes(txt)
         if includes != None:
@@ -64,9 +64,9 @@ class VarParser(object):
             for file in includes:
                 self.parse_file(file, True)
         if not include:
-            log.debug("解析出用到的变量: " + ','.join(self.vars))
-            log.debug("解析出设置的变量: " + ','.join(self.vars_set))
-            log.debug("解析出include文件: " + ','.join(self.includes))
+            log.debug("解析出用到的变量: %s", self.vars)
+            log.debug("解析出设置的变量: %s", self.vars_set)
+            log.debug("解析出include文件: %s", self.includes)
             return self.vars - self.vars_set
 
     # 从yaml文本中解析变量表达式

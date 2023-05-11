@@ -124,7 +124,7 @@ class YamlBoot(object):
     def run_1file(self, step_file, include = False):
         # 加载步骤文件：会更新 self.step_dir 与 self.step_file
         steps = self.load_1file(step_file, include)
-        log.debug(f"Load and run step file: {self.step_file}")
+        log.debug(f"Load and run step file: %s", self.step_file)
 
         # 记录yaml开始
         self.stat.enter_yaml(step_file)
@@ -171,7 +171,7 @@ class YamlBoot(object):
     :return 有返回值，以便处理协程方法
     '''
     def run_action(self, action, param):
-        log.debug(f"handle action: {action}={param}")
+        log.debug(f"handle action: %s=%s", action, param)
         if action[0] == '~':  # 定义过程
             action = f"proc({action[1:]})"
 
@@ -261,13 +261,13 @@ class YamlBoot(object):
         if isinstance(n, (list, tuple, set, range)) or self.is_pd_series(n):
             items = n
             n = len(items)
-        log.debug(f"-- Loop start: {label} -- ")
+        log.debug(f"-- Loop start: %s -- ", label)
         last_i = get_var('for_i', False) # 旧的索引
         last_v = get_var('for_v', False) # 旧的元素
         try:
             for i in range(n):
                 # i+1表示迭代次数比较容易理解
-                log.debug(f"{i+1}th iteration")
+                log.debug(f"%sth iteration", i+1)
                 set_var('for_i', i+1) # 更新索引
                 if n_null or items is None:
                     v = None
@@ -276,9 +276,9 @@ class YamlBoot(object):
                 set_var('for_v', v) # 更新元素
                 self.run_steps(steps)
         except BreakException as e:  # 跳出循环
-            log.debug(f"-- Loop break: {label}, break condition: {e.condition} -- ")
+            log.debug(f"-- Loop break: %s, break condition: %s -- ", label, e.condition)
         else:
-            log.debug(f"-- Loop finish: {label} -- ")
+            log.debug(f"-- Loop finish: %s -- ", label)
         finally:
             set_var('for_i', last_i) # 恢复索引
             set_var('for_v', last_v) # 恢复元素
@@ -313,7 +313,7 @@ class YamlBoot(object):
 
     # 打印变量
     def print_vars(self, _):
-        log.info(f"Variables: {get_vars()}")
+        log.info(f"Variables: %s", get_vars())
 
     # 睡眠
     def sleep(self, seconds):
@@ -329,7 +329,7 @@ class YamlBoot(object):
     # 执行命令
     def exec(self, cmd):
         output = run_command(cmd)
-        log.debug(f"execute commmand: {cmd} | result: {output}")
+        log.debug(f"execute commmand: %s | result: %s", cmd, output)
 
     # 定义过程, 可包含多个子步骤
     # :param steps

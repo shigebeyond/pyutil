@@ -68,7 +68,7 @@ class SchedulerThread(EventLoopThread):
             'day_of_week': day_of_week,
             'year': year,
         }
-        log.debug(f"解析cron: {trigger_args}")
+        log.debug(f"解析cron: %s", trigger_args)
         return trigger_args
 
 if __name__ == '__main__':

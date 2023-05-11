@@ -61,7 +61,7 @@ def parse_cmd(name, version):
     # 指定变量: 通过http url来指定, 该url返回yaml/json形式的变量
     if option.dataurl != None:
         data = read_remote_vars(option.dataurl)
-        log.debug(f"set variables: {data}")
+        log.debug(f"set variables: %s", data)
         set_vars(data)
 
     # 加载自定义函数
@@ -105,7 +105,7 @@ async def run_command_async(cmd, shell = True, wait_output = True):
     :param wait_output: 是否等待输出，不等待则立即返回，防止调用线程被阻塞
     :return:
     '''
-    #log.debug(f'Run command: {cmd}')
+    #log.debug(f'Run command: %s', cmd)
     # 1 执行命令
     if shell:
         proc = await asyncio.create_subprocess_shell(
@@ -127,11 +127,11 @@ async def run_command_async(cmd, shell = True, wait_output = True):
 
     stdout, stderr = await proc.communicate()
 
-    log.debug(f'Run command `{cmd}` exited with {proc.returncode}') # returncode为0则成功, 否则失败
+    log.debug(f'Run command `%s` exited with %s', cmd, proc.returncode) # returncode为0则成功, 否则失败
     # if stdout:
-    #     log.debug(f'[stdout]\n{stdout.decode()}')
+    #     log.debug(f'[stdout]\n%s', stdout.decode())
     if stderr:
-        #log.debug(f'[stderr]\n{stderr.decode()}')
+        #log.debug(f'[stderr]\n%s', stderr.decode())
         raise Exception(f"Fail to run command `{cmd}`: \n{stderr.decode()}")
 
     return stdout.decode()
