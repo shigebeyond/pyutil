@@ -28,6 +28,8 @@ class YamlBoot(object):
             'sleep': self.sleep,
             'print': self.print,
             'for': self.do_for,
+            'if': self.do_if,
+            'else': self.do_else,
             'once': self.once,
             'break_if': self.break_if,
             'moveon_if': self.moveon_if,
@@ -161,6 +163,7 @@ class YamlBoot(object):
         for step in steps:
             self.stat.incr_step()  # 统计
             for action, param in step.items():
+                self.check_if_else_pos(step)
                 self.stat.incr_action()  # 统计
                 self.run_action(action, param)
 
@@ -287,6 +290,36 @@ class YamlBoot(object):
     def once(self, steps):
         self.do_for(steps, 1)
 
+    # if条件
+    # :param steps 满足条件时要执行的步骤
+    # :param expr 条件表达式
+    def do_if(self, steps, expr):
+        val = self.eval_condition(expr)
+        if val:
+            self.run_steps(steps)
+        set_var('doing_else', not val)
+
+    # else条件
+    def do_else(self, steps):
+        if get_var('doing_else'):
+            self.run_steps(steps)
+        set_var('doing_else', None)
+
+    # 校验if/else位置：else必须处于if之后
+    def check_if_else_pos(self, actions):
+        if 'if' in actions and 'else' in actions:
+            keys = list(actions.keys())
+            last_if = -2 # 记录前一个if位置
+            for i in keys:
+                key = keys[i]
+                if key == 'if':
+                    last_if = i
+                elif key == 'else':
+                    if i == last_if + 1: # else必须处于if之后
+                        last_if = -2
+                    else:
+                        raise Exception("else动作必须处于if动作之后")
+
     # 检查并继续for循环
     def moveon_if(self, expr):
         # break_if(条件取反)
@@ -294,9 +327,13 @@ class YamlBoot(object):
 
     # 跳出for循环
     def break_if(self, expr):
-        val = eval(expr, globals(), get_vars())  # 丢失本地与全局变量, 如引用不了json模块
-        if bool(val):
+        if self.eval_condition(expr):
             raise BreakException(expr)
+
+    # 执行条件表达式
+    def eval_condition(self, expr):
+        val = eval(expr, globals(), get_vars())  # 丢失本地与全局变量, 如引用不了json模块
+        return bool(val)
 
     # 加载并执行其他步骤文件
     def include(self, step_file):
