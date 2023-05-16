@@ -229,7 +229,7 @@ def parse_df_prop(expr):
 
     var = mat.group(1)  # df变量
     prop = mat.group(2)  # 属性名
-    val = get_vars()[var]
+    val = get_var(var)
     if not isinstance(val, pd.DataFrame):
         raise Exception(f"变量[{var}]值不是DataFrame: {val}")
     return val[prop]
