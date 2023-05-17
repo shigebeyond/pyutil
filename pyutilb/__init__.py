@@ -10,6 +10,7 @@ from .asyncio_threadpool import EventLoopThread, EventLoopThreadPool
 from .asyncio_apscheduler_thread import SchedulerThread
 from .atomic import AtomicInteger, AtomicStarter
 from .base_validator import BaseValidator
+from .base_extractor import BaseExtractor
 
 __author__ = "shigebeyond"
 __version__ = "1.0.6"
@@ -33,5 +34,6 @@ __all__ = [
     "SchedulerThread",
     "AtomicInteger",
     "AtomicStarter",
-    "BaseValidator"
+    "BaseValidator",
+    "BaseExtractor"
 ]
