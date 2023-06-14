@@ -21,6 +21,8 @@ class YamlBoot(object):
     def __init__(self):
         # 步骤文件所在的目录
         self.step_dir = None
+        # 步骤文件所在的目录作为当前目录，主要用在K8sBoot项目的步骤文件执行过程中调用 read_file() 时应用为当前目录
+        self.step_dir_as_cwd = False
         # 动作映射函数
         self.actions = {
             'exit': exit,
@@ -131,8 +133,17 @@ class YamlBoot(object):
         # 记录yaml开始
         self.stat.enter_yaml(step_file)
 
+        # step_dir作为当前目录
+        if self.step_dir_as_cwd:
+            cur_dir = os.getcwd()
+            os.chdir(self.step_dir)
+
         # 执行多个步骤
         self.run_steps(steps)
+
+        # 恢复当前目录
+        if self.step_dir_as_cwd:
+            os.chdir(cur_dir)
 
         # 记录yaml结束
         self.stat.exit_yaml()
