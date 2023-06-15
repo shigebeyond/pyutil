@@ -14,7 +14,7 @@ from pyutilb.log import log
 from pyutilb.file import read_http_file
 from pyutilb.log import log
 from pyutilb.strs import substr_after_lines
-from pyutilb.util import set_vars
+from pyutilb.util import set_vars, custom_funs
 
 # 解析命令的选项与参数
 # :param name 命令名
@@ -66,8 +66,8 @@ def parse_cmd(name, version):
 
     # 加载自定义函数
     if option.funs != None:
-        global custom_funs
-        custom_funs = load_module_funs(option.funs)
+        funs = load_module_funs(option.funs)
+        custom_funs.update(funs)
 
     # print(option)
     # print(args)

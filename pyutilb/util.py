@@ -9,12 +9,64 @@ from jsonpath import jsonpath
 import csv
 from pyutilb import ts
 from pyutilb.threadlocal import ThreadLocal
+from pyutilb.file import *
 import pandas as pd
 import threading
+import hashlib
 
+# -------------------- 帮助方法 ----------------------
 # 输出异常
 def print_exception(ex):
     print('\033[31mException occurs: ' + str(ex) + '\033[0m')
+
+def replace_sysarg(cmd):
+    '''
+    替换命令行的参数,
+        $1 替换为第2个参数
+        $1_ 替换为第2个以后的所有参数，用空格连接
+        $1_3 替换为第2个到第4个的参数，用空格连接
+    '''
+    def replace(match) -> cmd:
+        arg = match.group(1)
+        # 数字
+        if arg.isdigit():
+            return sys.argv[int(arg)]
+
+        # 数字范围: 1_3
+        if re.match(r'\d+_\d*', arg):
+            start, end = arg.split('_')
+            if not end:
+                end = len(sys.argv)
+            return ' '.join(sys.argv[int(start):int(end)])
+
+        return arg
+
+    return re.sub(r'\$([\w\d_]+)', replace, cmd)  # 处理变量
+
+# 构建md5 hash
+def md5(str):
+    m = hashlib.md5(str.encode(encoding='utf-8'))
+    return m.hexdigest()  # 转化为16进制
+
+# 获得并删除字典中的项目
+def get_and_del_dict_item(dict, key, default = None):
+    if key in dict:
+        ret = dict[key]
+        del dict[key]
+        return ret
+    return default
+
+# 获得列表中的项目
+def get_list_item(list, i, default = None):
+    if len(list) >= i:
+        return default
+    return list[i]
+
+# 删除字典中值为none的项目
+def del_dict_none_item(dict):
+    keys = [k for k,v in dict.items() if v is None]
+    for k in keys:
+        del dict[k]
 
 # -------------------- 变量读写+表达式解析与执行 ----------------------
 # 变量: vars
@@ -246,6 +298,9 @@ sys_funcs = {
     'len': get_len,
     'link': link,
     'link_sheet': link_sheet,
+    'read_file': read_file,
+    'read_json': read_json,
+    'read_yaml': read_yaml,
 }
 # 自定义函数, 通过 -c 注入的外部python文件定义的函数
 custom_funs = {}
