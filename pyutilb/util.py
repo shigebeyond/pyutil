@@ -195,13 +195,13 @@ def replace_var(txt, to_str = True):
 
     # 如果是列表/元组/集合，则每个元素递归替换
     if isinstance(txt, (list, tuple, set, range)):
-        return list(map(replace_var, txt))
+        return [replace_var(v, to_str) for v in txt]
 
     # 如果是字典，则每个元素递归替换
     if isinstance(txt, dict):
         txt = txt.copy() # 要拷贝, 不能直接改原来的参数值, 否则在for中循环调用同一个动作时, 该动作的参数只能替换一次变量
         for k, v in txt.items():
-            txt[k] = replace_var(v)  # 替换变量
+            txt[k] = replace_var(v, to_str)  # 替换变量
         return txt
 
     # 字符串：直接替换
