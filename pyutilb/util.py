@@ -68,6 +68,10 @@ def del_dict_none_item(dict):
     for k in keys:
         del dict[k]
 
+# 获得字典的第一个key
+def get_dict_first_key(dict):
+    return list(dict.keys())[0]
+
 # -------------------- 变量读写+表达式解析与执行 ----------------------
 # 变量: vars
 vars = ThreadLocal(lambda : {})
