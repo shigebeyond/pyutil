@@ -58,7 +58,7 @@ def get_and_del_dict_item(dict, key, default = None):
 
 # 获得列表中的项目
 def get_list_item(list, i, default = None):
-    if len(list) > i + 1:
+    if len(list) < i + 1:
         return default
     return list[i]
 
