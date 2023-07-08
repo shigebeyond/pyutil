@@ -72,6 +72,13 @@ def del_dict_none_item(dict):
 def get_dict_first_key(dict):
     return list(dict.keys())[0]
 
+# 扩展list，将val插入n次
+def extend_list(list, n, val = None):
+    if n == 0:
+        return
+    for i in range(0, n):
+        list.append(val)
+
 # -------------------- 变量读写+表达式解析与执行 ----------------------
 # 变量: vars
 vars = ThreadLocal(lambda : {})

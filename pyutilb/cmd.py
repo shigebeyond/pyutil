@@ -14,7 +14,7 @@ from pyutilb.log import log
 from pyutilb.file import read_http_file
 from pyutilb.log import log
 from pyutilb.strs import substr_after_lines
-from pyutilb.util import set_vars, custom_funs
+from pyutilb.util import set_vars, custom_funs, extend_list
 
 # 解析命令的选项与参数
 # :param name 命令名
@@ -185,7 +185,10 @@ def get_ip():
 
 # 根据空格来分割字符串
 def split_by_space(line, maxsplit=0):
-    return re.split("\s+", line.strip(), maxsplit)
+    ret = re.split("\s+", line.strip(), maxsplit)
+    # 如果不足maxsplit，则补足
+    extend_list(ret, maxsplit + 1 - len(ret))
+    return ret
 
 # 命令行输出转表格
 # :param from_nline 从第几行开始
