@@ -39,6 +39,8 @@ def parse_cmd(name, version):
     optParser.add_option("-c", "--autoclose", dest="autoclose", action="store_true", help="auto close when finish or exception")
     # MonitorBoot用到的参数
     optParser.add_option("-t", "--runtime", dest="runtime", type="int", help="Stop after the specified amount of seconds")
+    # K8sBoot用到的参数
+    optParser.add_option("-o", "--output", dest="output", type="string", help="K8s file save directory")
 
     # 解析选项
     option, args = optParser.parse_args(args)
