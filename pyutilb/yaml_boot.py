@@ -49,6 +49,7 @@ class YamlBoot(object):
         self.procs = {}
         # 统计
         self.stat = Stat.start()
+        self.stat_dump = True # 是否需要输出统计结果到stat.yml，K8sBoot项目不需要
         # 调试
         self.debug = False
 
@@ -76,10 +77,12 @@ class YamlBoot(object):
 
             self.on_end() # 执行完的后置处理, 要在统计扫尾前调用
 
-            self.stat.end()
+            if self.stat_dump:
+                self.stat.end()
             return self.stat
         except Exception as ex:
-            self.stat.end(ex)
+            if self.stat_dump:
+                self.stat.end(ex)
             if throwing:
                 raise ex
 
