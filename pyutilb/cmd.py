@@ -7,6 +7,7 @@ import sys
 import pandas as pd
 import requests
 import query_string
+import yaml
 from optparse import OptionParser
 from pyutilb.module_loader import load_module_funs
 from pyutilb.file import read_http_file, read_remote_vars
@@ -87,6 +88,11 @@ def fetch_pypi_project_version(project):
 # 同步执行命令
 def run_command(cmd):
     return os.popen(cmd).read()
+
+# 同步执行命令，并将输出转为yaml对象
+def run_command_return_yaml(cmd):
+    output = run_command(cmd)
+    return yaml.load(output, Loader=yaml.FullLoader)
 
 # 同步执行命令，并将输出整理为df
 def run_command_return_dataframe(cmd):
