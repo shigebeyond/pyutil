@@ -95,8 +95,11 @@ def run_command_return_yaml(cmd):
     return yaml.load(output, Loader=yaml.FullLoader)
 
 # 同步执行命令，并将输出整理为df
-def run_command_return_dataframe(cmd):
+def run_command_return_dataframe(cmd, fix_output = None):
     output = run_command(cmd)
+    # 有些输出不是规范的，如某列会有多个空格，需要调用者手动修复
+    if fix_output:
+        output = fix_output(output)
     return cmd_output2dataframe(output)
 
 # 将命令扔到事件循环(的线程)中执行
