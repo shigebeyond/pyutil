@@ -6,4 +6,3 @@ cssselect == 1.1.0
 query-string == 2020.12.3
 pandas >= 1.1.5
 APScheduler == 3.10.1
-pyinotify == 0.9.6
