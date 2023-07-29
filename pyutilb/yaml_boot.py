@@ -23,6 +23,10 @@ class YamlBoot(object):
         self.step_dir = None
         # 步骤文件所在的目录作为当前目录，主要用在K8sBoot项目的步骤文件执行过程中调用 read_file() 时应用为当前目录
         self.step_dir_as_cwd = False
+        # 当前文件
+        self.step_file = None
+        # 步骤文的缓存, 用于减少文件读IO, 如果你想读文件缓存, 请调用use_file_cache(True), 如LocustBoot压测时可能会频繁include步骤文件
+        self.step_file_cache = None
         # 动作映射函数
         self.actions = {
             'exit': exit,
@@ -44,8 +48,6 @@ class YamlBoot(object):
             'call': self.call,
         }
         set_var('boot', self)
-        # 当前文件
-        self.step_file = None
         # 记录定义的过程, 通过 ~过程名 来定义, 通过 call:过程名 来调用
         self.procs = {}
         # 统计
@@ -53,6 +55,13 @@ class YamlBoot(object):
         self.stat_dump = True # 是否需要输出统计结果到stat.yml，K8sBoot项目不需要
         # 调试
         self.debug = False
+
+    # 设置是否使用文件缓存, 一般用在LocustBoot, 其压测时可能会频繁include步骤文件
+    def use_file_cache(self, cached):
+        if cached:
+            self.step_file_cache = {}
+        else:
+            self.step_file_cache = None
 
     # 添加单个动作
     def add_action(self, name: str, callback: str):
@@ -169,8 +178,18 @@ class YamlBoot(object):
         # 记录步骤文件
         self.step_file = step_file
         # 读取步骤
-        steps = read_yaml(step_file)
-        return steps
+        return self.read_cached_step_file(step_file)
+
+    # 有缓存的读步骤文件
+    def read_cached_step_file(self, step_file):
+        # 无缓存: 直接读文件
+        if self.step_file_cache is None:
+            return read_yaml(step_file)
+
+        # 有缓存: 读缓存
+        if step_file not in self.step_file_cache:
+            self.step_file_cache[step_file] = read_yaml(step_file)
+        return self.step_file_cache[step_file]
 
     # 执行多个步骤
     def run_steps(self, steps):
