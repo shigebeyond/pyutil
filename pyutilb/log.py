@@ -35,20 +35,32 @@ class AsyncLogger(object):
         logger = logging.getLogger(name)
         self.logger = logger
 
+    # 设置日志等级
+    def setLevel(self, level):
+        if isinstance(level, str):
+            level = level.upper() # 转大写
+        self.logger.setLevel(level) # logger内部会转为int
+
+    # 打日志
     def debug(self, msg, *args, **kwargs):
-        AsyncLogger.executor().submit(self.logger.debug, msg, *args, **kwargs)
+        if self.logger.isEnabledFor(logging.DEBUG):
+            AsyncLogger.executor().submit(self.logger.debug, msg, *args, **kwargs)
 
     def info(self, msg, *args, **kwargs):
-        AsyncLogger.executor().submit(self.logger.info, msg, *args, **kwargs)
+        if self.logger.isEnabledFor(logging.INFO):
+            AsyncLogger.executor().submit(self.logger.info, msg, *args, **kwargs)
 
     def warning(self, msg, *args, **kwargs):
-        AsyncLogger.executor().submit(self.logger.warning, msg, *args, **kwargs)
+        if self.logger.isEnabledFor(logging.WARNING):
+            AsyncLogger.executor().submit(self.logger.warning, msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
-        AsyncLogger.executor().submit(self.logger.error, msg, *args, **kwargs)
+        if self.logger.isEnabledFor(logging.ERROR):
+            AsyncLogger.executor().submit(self.logger.error, msg, *args, **kwargs)
 
     def critical(self, msg, *args, **kwargs):
-        AsyncLogger.executor().submit(self.logger.critical, msg, *args, **kwargs)
+        if self.logger.isEnabledFor(logging.CRITICAL):
+            AsyncLogger.executor().submit(self.logger.critical, msg, *args, **kwargs)
 
 # 获得异步日志
 def getLogger(name=None):

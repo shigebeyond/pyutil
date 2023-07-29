@@ -29,6 +29,7 @@ class YamlBoot(object):
             'debug': self.set_debug,
             'sleep': self.sleep,
             'print': self.print,
+            'log_level': self.log_level,
             'for': self.do_for,
             'if': self.do_if,
             'else': self.do_else,
@@ -376,6 +377,10 @@ class YamlBoot(object):
     def print(self, msg):
         msg = replace_var(msg)  # 替换变量
         log.debug(msg)
+
+    # 设置日志等级
+    def log_level(self, level):
+        log.setLevel(level)
 
     # 执行命令
     def exec(self, cmd):
