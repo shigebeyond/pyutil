@@ -33,7 +33,7 @@ class ZkFileSubscriber(object):
         :param parent_path 父目录
         :param listener 监听器
         '''
-        log.info("ZkChildListener监听[{}]子节点变化", parent_path)
+        log.info("ZkChildListener监听[%s]子节点变化", parent_path)
         # 1 获得zk子节点监听器
         self.child_listeners[parent_path] = ZkChildListener(self.zk, parent_path, listener)
 
@@ -46,14 +46,14 @@ class ZkFileSubscriber(object):
         :param parent_path 父目录
         :param listener 监听器
         '''
-        log.info("ZkChildListener取消监听[{}]子节点变化", parent_path)
+        log.info("ZkChildListener取消监听[%s]子节点变化", parent_path)
         # 获得zk子节点监听器
         child_listener = self.child_listeners[parent_path]
         if child_listener is not None:
             # 关闭: 清理监听器
             child_listener.close()
             # 删除zk子节点监听器
-            self.child_listeners.remove(parent_path)
+            self.child_listeners.pop(parent_path)
 
     def list_files(self, parent_path: str) -> list:
         '''
@@ -67,7 +67,7 @@ class ZkFileSubscriber(object):
             children = self.zk.get_children(parent_path)
 
         # 处理文件变化, 从而触发 IDiscoveryListener
-        self.child_listeners[parent_path].watch_children(parent_path, children)
+        self.child_listeners[parent_path].watch_children(children)
         return children
 
     def close(self):

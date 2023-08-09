@@ -1,5 +1,3 @@
-from pyutilb.zkfile.zkconfigfiles import ZkConfigFiles
-
 '''
 zookeeper上的配置文件数据, 支持从远端(zookeeper)加载配置
 
@@ -22,7 +20,7 @@ jkcfig
 '''
 class ZkConfig(object):
 
-    def __int__(self, files: ZkConfigFiles, file: str):
+    def __init__(self, files, file: str):
         self.files = files
         self.file = file
 

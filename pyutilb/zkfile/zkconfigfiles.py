@@ -1,6 +1,10 @@
 import configparser
 import json
+import time
+
 import yaml
+from kazoo.client import KazooClient
+
 from pyutilb.zkfile.filelistener import IFileListener
 from pyutilb.zkfile.zkconfig import ZkConfig
 from pyutilb.zkfile.zkfilesubscriber import ZkFileSubscriber
@@ -27,9 +31,12 @@ jkcfig
 '''
 class ZkConfigFiles(IFileListener):
 
-    def __int__(self, namespace, name, zk):
-        self.app_path = f"/jkcfg/${namespace}/${name}"  # 应用路径
+    def __init__(self, namespace, name, zk_or_host):
+        self.app_path = f"/jkcfg/{namespace}/{name}"  # 应用路径
         self.file_props = {}  # 所有配置文件的数据: <文件路径 to 配置数据>
+        if not isinstance(zk_or_host, KazooClient):
+            zk = KazooClient(hosts=zk_or_host)
+            zk.start()
         self.zk = zk
         # 监听应用下配置文件变化
         self.zk_sub = ZkFileSubscriber(zk)
@@ -55,7 +62,7 @@ class ZkConfigFiles(IFileListener):
         :param url
         '''
         path = self._get_filename(path)
-        self.file_props.remove(path)
+        self.file_props.pop(path)
 
     def handle_content_change(self, path: str, content: str):
         '''
@@ -74,7 +81,7 @@ class ZkConfigFiles(IFileListener):
         如 /jkcfg/default/rpcserver/redis.yml 转为 redis.yml
         '''
         # return path.replace(self.app_path, "") # wrong: /redis.yml
-        return path[self.app_path.length+1 : ]  # right: redis.yml
+        return path[len(self.app_path)+1 : ]  # right: redis.yml
 
     def _build_properties(self, content: str, type: str) -> dict:
         '''
@@ -89,7 +96,7 @@ class ZkConfigFiles(IFileListener):
         # 解析内容
         if type == "properties":
             return configparser.ConfigParser().read_string(content)  # 加载 properties 文件
-        if type == "yaml":
+        if type == "yaml" or type == "yml":
             return yaml.load(content, Loader=yaml.FullLoader)  # 加载 yaml 文件
         if type == "json":
             return json.loads(content)  # 加载 json 文件
@@ -109,3 +116,23 @@ class ZkConfigFiles(IFileListener):
         获得ZkConfig实例
         '''
         return ZkConfig(self, file)
+
+    def close(self):
+        self.zk_sub.close()
+        self.zk.stop()
+
+if __name__ == '__main__':
+    # 连接zk
+    zk_host = '10.103.47.192'
+
+    # zk = KazooClient(hosts=zk_host)
+    # zk.start()
+    # files = ZkConfigFiles('default', 'rpcserver', zk)
+
+    files = ZkConfigFiles('default', 'rpcserver', zk_host)
+    config = files.get_zk_config('redis.yml')
+    while True:
+        print(config['host'])
+        time.sleep(3)
+    files.close()
+

@@ -29,12 +29,13 @@ class ZkChildListener(IFileListener):
         files = set(self.files)
         new_files = set(new_childs)
         # 处理配置文件变化, 从而触发 IDiscoveryListener
-        log.info("处理zk[{}]子节点变化事件, 子节点为:}", self.parent_path, new_childs)
+        log.info("处理zk[%s]子节点变化事件, 子节点为:%s", self.parent_path, new_childs)
         # 1 新加文件
         add_files = new_files - files
         for file in add_files:
             path = self.parent_path + '/' + file
-            content = self.zk.read_data(path)  # 节点值
+            content = self.zk.get(path)  # 节点值
+            content = content[0].decode('utf-8')
             self.handle_file_add(path, content)
 
         # 2 删除文件
@@ -51,15 +52,15 @@ class ZkChildListener(IFileListener):
         对文件子节点添加数据监听器
         :param path
         '''
-        log.info("ZkChildListener监听[{}]数据变化", path)
+        log.info("ZkChildListener监听[%s]数据变化", path)
 
         # 订阅节点数据变化
-        def watch_data(self, data, stat):
-            content = data.decode()
+        def watch_data(data, stat, event):
+            content = data.decode('utf-8')
             print(f"Data: {content}, Version: {stat.version}")
             # 处理更新文件内容
             self.file_listener.handle_content_change(path, content)
-            log.info("处理zk节点[{}]数据变化事件，数据为:}", path, content)
+            log.info("处理zk节点[%s]数据变化事件，数据为:%s", path, content)
 
         watcher = DataWatch(client=self.zk, path=path, func=watch_data)
         self.data_watchers[path] = watcher
@@ -69,7 +70,7 @@ class ZkChildListener(IFileListener):
         对文件子节点删除数据监听器
         :param path
         '''
-        log.info("ZkChildListener取消监听[{}]数据变化", path)
+        log.info("ZkChildListener取消监听[%s]数据变化", path)
         watcher = self.data_watchers.pop(path)
         watcher.cancel()
 
@@ -81,7 +82,6 @@ class ZkChildListener(IFileListener):
         self.child_watcher.cancel()
 
         # 清理数据监听器
-        # ConcurrentHashMap支持边遍历边删除, HashMap不支持
         for key in self.data_watchers.keys:
             self.remove_data_listener(key)
 
