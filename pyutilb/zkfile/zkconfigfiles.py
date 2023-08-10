@@ -31,15 +31,11 @@ jkcfig
 '''
 class ZkConfigFiles(IFileListener):
 
-    def __init__(self, namespace, name, zk_or_host):
+    def __init__(self, zk_hosts, namespace, name):
         self.app_path = f"/jkcfg/{namespace}/{name}"  # 应用路径
         self.file_props = {}  # 所有配置文件的数据: <文件路径 to 配置数据>
-        if not isinstance(zk_or_host, KazooClient):
-            zk = KazooClient(hosts=zk_or_host)
-            zk.start()
-        self.zk = zk
         # 监听应用下配置文件变化
-        self.zk_sub = ZkFileSubscriber(zk)
+        self.zk_sub = ZkFileSubscriber.instances(zk_hosts)
         self.zk_sub.subscribe(self.app_path, self)
 
     @property
@@ -117,22 +113,14 @@ class ZkConfigFiles(IFileListener):
         '''
         return ZkConfig(self, file)
 
-    def close(self):
-        self.zk_sub.close()
-        self.zk.stop()
-
 if __name__ == '__main__':
-    # 连接zk
-    zk_host = '10.103.47.192'
+    # zookeeper服务地址
+    zk_host = '10.101.163.242:2181'
 
-    # zk = KazooClient(hosts=zk_host)
-    # zk.start()
-    # files = ZkConfigFiles('default', 'rpcserver', zk)
-
-    files = ZkConfigFiles('default', 'rpcserver', zk_host)
-    config = files.get_zk_config('redis.yml')
+    # 实例化ZkConfigFiles, 他会从远端(zookeeper)加载配置文件, 需要3个参数: 1 zk_hosts: zookeeper服务地址 2 namespace: k8s命名空间 3 name: 当前应用名
+    files = ZkConfigFiles(zk_host, 'default', 'rpcserver') # 加载zookeeper中路径/jkcfg/default/rpcserver 下的配置文件
+    config = files.get_zk_config('redis.yml') # 加载zookeeper中路径为/jkcfg/default/rpcserver/redis.yml 的配置文件
     while True:
-        print(config['host'])
+        print(config['host']) # 读配置文件中host配置项的值
         time.sleep(3)
-    files.close()
 

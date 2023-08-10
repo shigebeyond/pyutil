@@ -10,7 +10,7 @@ import query_string
 import yaml
 from optparse import OptionParser
 from pyutilb.module_loader import load_module_funs
-from pyutilb.file import read_http_file, read_remote_vars
+from pyutilb.file import read_http_file, read_vars
 from pyutilb.log import log
 from pyutilb.file import read_http_file
 from pyutilb.log import log
@@ -63,7 +63,7 @@ def parse_cmd(name, version):
 
     # 指定变量: 通过http url来指定, 该url返回yaml/json形式的变量
     if option.dataurl != None:
-        data = read_remote_vars(option.dataurl)
+        data = read_vars(option.dataurl)
         log.debug(f"set variables: %s", data)
         set_vars(data)
 

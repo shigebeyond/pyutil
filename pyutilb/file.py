@@ -124,8 +124,8 @@ def read_init_file_meta(init_file):
         meta = dict(items)
         return meta
 
-# 读远端url返回的json/yaml形式的变量
-def read_remote_vars(url):
+# 读本地或远端url返回的json/yaml形式的变量
+def read_vars(url):
     #return read_yaml(option.dataurl)
     txt = read_http_file(url)
     if txt[0] == '{':

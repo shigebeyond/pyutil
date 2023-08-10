@@ -34,8 +34,8 @@ setup(
     # packages=find_packages(),
     # package_data={"pyutilb":["pyutilb/logging.conf"]},
     # success: 有logging.conf
-    packages=['pyutilb'],
-    package_dir={'pyutilb': 'pyutilb'},
+    packages=['pyutilb', 'pyutilb.zkfile'],
+    package_dir={'pyutilb': 'pyutilb', 'pyutilb.zkfile': 'pyutilb/zkfile'},
     package_data={"pyutilb":["logging.conf"]}, # 默认是不带py之外的文件，因此要主动声明带上
     include_package_data=True,
     zip_safe=False,
