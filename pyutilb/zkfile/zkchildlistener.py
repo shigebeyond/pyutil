@@ -16,6 +16,7 @@ class ZkChildListener(IFileListener):
         self.files = []  # 子文件
 
         # 添加zk子节点监听
+        self.watching = True
         self.child_watcher = ChildrenWatch(client=zk, path=parent_path, func=self.watch_children)
 
     # ------------------- 监听子节点变化 ---------------------
@@ -26,10 +27,14 @@ class ZkChildListener(IFileListener):
         :param parent_path
         :param current_childs
         '''
+        if not self.watching:
+            log.info("watch_children()取消订阅zk[%s]子节点变化, 子节点为:%s", self.parent_path, new_childs)
+            return False
+
         files = set(self.files)
         new_files = set(new_childs)
         # 处理配置文件变化, 从而触发 IDiscoveryListener
-        log.info("处理zk[%s]子节点变化事件, 子节点为:%s", self.parent_path, new_childs)
+        log.info("watch_children()处理zk[%s]子节点变化事件, 子节点为:%s", self.parent_path, new_childs)
         # 1 新加文件
         add_files = new_files - files
         for file in add_files:
@@ -45,6 +50,7 @@ class ZkChildListener(IFileListener):
             self.handle_file_remove(path)
 
         self.files = new_childs
+        return True
 
     # ------------------- 监听子节点数据变化 ---------------------
     def add_data_listener(self, path: str):
@@ -54,13 +60,19 @@ class ZkChildListener(IFileListener):
         '''
         log.info("ZkChildListener监听[%s]数据变化", path)
 
-        # 订阅节点数据变化
+        # 订阅节点数据变化: 如果不订阅，则返回false
         def watch_data(data, stat, event):
-            content = data.decode('utf-8')
-            print(f"Data: {content}, Version: {stat.version}")
-            # 处理更新文件内容
-            self.file_listener.handle_content_change(path, content)
-            log.info("处理zk节点[%s]数据变化事件，数据为:%s", path, content)
+            # 首次 and 有订阅该路径，控制是否继续订阅
+            # 首次是在实例化DataWatch时，但self.data_watchers[path]还未赋值，因此用
+            watching = event is None or path in self.data_watchers
+            if watching:
+                content = data.decode('utf-8')
+                # 处理更新文件内容
+                self.file_listener.handle_content_change(path, content)
+                log.info("watch_data()处理zk节点[%s]数据变化事件，版本为:%s，数据为:%s", path, stat.version, content)
+            else:
+                log.info("watch_data()取消订阅zk节点[%s]数据变化", path)
+            return watching
 
         watcher = DataWatch(client=self.zk, path=path, func=watch_data)
         self.data_watchers[path] = watcher
@@ -72,17 +84,18 @@ class ZkChildListener(IFileListener):
         '''
         log.info("ZkChildListener取消监听[%s]数据变化", path)
         watcher = self.data_watchers.pop(path)
-        watcher.cancel()
+        #watcher.cancel() # 无效
 
     def close(self):
         '''
         关闭: 清理监听器
         '''
         # 取消zk子节点监听
-        self.child_watcher.cancel()
+        # self.child_watcher.cancel() # 无效
+        self.watching = False
 
         # 清理数据监听器
-        for key in self.data_watchers.keys:
+        for key in list(self.data_watchers.keys()):
             self.remove_data_listener(key)
 
     # ------------------- 代理调用 file_listener, 多加了增删数据监听器 ---------------------

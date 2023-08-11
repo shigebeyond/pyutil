@@ -97,6 +97,6 @@ class ZkFileSubscriber(object):
 
     # 去掉监听+关闭zk连接
     def close(self):
-        for parent_path in self.child_listeners.keys():
+        for parent_path in list(self.child_listeners.keys()):
             self.unsubscribe(parent_path)
         self.zk.stop()

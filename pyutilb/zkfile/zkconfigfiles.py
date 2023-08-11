@@ -43,7 +43,7 @@ class ZkConfigFiles(IFileListener):
         '''
         获得所有配置文件
         '''
-        return self.file_props.keys
+        return self.file_props.keys()
 
     def handle_file_add(self, path: str, content: str):
         '''
