@@ -224,11 +224,12 @@ jkcfig
   default # k8s命名空间
     app1 # 应用
       redis.yaml # 配置文件
-             log4j.properties
+      log4j.properties
     app2 # 应用
       redis.yaml # 配置文件
-             log4j.properties
+      log4j.properties
 ```
+注：仅支持 properties/yaml/yml/json 4种后缀的配置文件
 
 2. 数据管理层面：结合 [jkcfg](https://github.com/shigebeyond/jkcfg) 在zookeeper上做配置管理，生成对应的目录结构
 

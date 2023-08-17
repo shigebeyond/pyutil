@@ -62,7 +62,9 @@ def recognize_text(file):
     data['sign'] = sign
 
     response = do_request(data)
+    # print(response.text)
     result = response.json()
+    # print(result)
     if int(result['errorCode']) > 0:
         raise Exception(f"Fail to call youdao-orc api: {result}")
 
@@ -103,4 +105,5 @@ def recognize_text(file):
 '''
 
 if __name__ == '__main__':
-    recognize_text('./test.jpg')
+    ret = recognize_text('/home/shi/code/java/jksoa/doc/rpc/img/rpc-flow.png')
+    print(ret)
