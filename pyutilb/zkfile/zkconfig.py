@@ -24,10 +24,16 @@ class ZkConfig(object):
         self.files = files
         self.file = file
 
+    # 获得配置数据
     @property
     def data(self):
         return self.files.get_file_props(self.file)
 
+    # 添加配置变化监听器
+    def add_config_listener(self, callback):
+        self.files.add_config_listener(self.file, callback)
+
+    # 实现dict方法
     def __getitem__(self, key):
         return self.data[key]
 

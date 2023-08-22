@@ -241,12 +241,14 @@ import time
 from pyutilb.zkfile.zkconfigfiles import ZkConfigFiles
 
 # zookeeper服务地址
-zk_host = '10.101.163.242:2181'
+zk_host = '10.106.113.218:2181'
 
 # 实例化ZkConfigFiles, 他会从远端(zookeeper)加载配置文件, 需要3个参数: 1 zk_hosts: zookeeper服务地址 2 namespace: k8s命名空间 3 name: 当前应用名
-files = ZkConfigFiles(zk_host, 'default', 'rpcserver') # 加载zookeeper中路径/jkcfg/default/rpcserver 下的配置文件
-config = files.get_zk_config('redis.yml') # 获得zookeeper中路径为/jkcfg/default/rpcserver/redis.yml 的配置文件的配置数据
+files = ZkConfigFiles(zk_host, 'default', 'rpcserver')  # 加载zookeeper中路径/jkcfg/default/rpcserver 下的配置文件
+file = 'redis.yml'
+config = files.get_zk_config(file)  # 加载zookeeper中路径为/jkcfg/default/rpcserver/redis.yml 的配置文件
+config.add_config_listener(lambda data: print(f"监听到配置[{file}]变更: {data}"))
 while True:
-    print(config['host']) # 读配置文件中host配置项的值
+    print(config['host'])  # 读配置文件中host配置项的值
     time.sleep(3)
 ```

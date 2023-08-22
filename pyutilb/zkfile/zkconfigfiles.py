@@ -4,7 +4,6 @@ import time
 
 import yaml
 from kazoo.client import KazooClient
-
 from pyutilb.zkfile.filelistener import IFileListener
 from pyutilb.zkfile.zkconfig import ZkConfig
 from pyutilb.zkfile.zkfilesubscriber import ZkFileSubscriber
@@ -34,6 +33,7 @@ class ZkConfigFiles(IFileListener):
     def __init__(self, zk_hosts, namespace, name):
         self.app_path = f"/jkcfg/{namespace}/{name}"  # 应用路径
         self.file_props = {}  # 所有配置文件的数据: <文件路径 to 配置数据>
+        self.config_listeners = {} # 配置变化监听器: <配置文件名 to 配置变化监听器>
         # 监听应用下配置文件变化
         self.zk_sub = ZkFileSubscriber.instances(zk_hosts)
         self.zk_sub.subscribe(self.app_path, self)
@@ -45,6 +45,7 @@ class ZkConfigFiles(IFileListener):
         '''
         return self.file_props.keys()
 
+    # -------------- 实现 IFileListener zk文件变化的监听器 --------------
     def handle_file_add(self, path: str, content: str):
         '''
         处理配置文件新增
@@ -59,6 +60,7 @@ class ZkConfigFiles(IFileListener):
         '''
         path = self._get_filename(path)
         self.file_props.pop(path)
+        self.trigger_config_listeners(path, None)
 
     def handle_content_change(self, path: str, content: str):
         '''
@@ -70,6 +72,7 @@ class ZkConfigFiles(IFileListener):
         type = path.rsplit('.')[1]  # 扩展名即为类型
         data = self._build_properties(content, type)
         self.file_props[path] = data
+        self.trigger_config_listeners(path, data)
 
     def _get_filename(self, path: str) -> str:
         '''
@@ -77,7 +80,7 @@ class ZkConfigFiles(IFileListener):
         如 /jkcfg/default/rpcserver/redis.yml 转为 redis.yml
         '''
         # return path.replace(self.app_path, "") # wrong: /redis.yml
-        return path[len(self.app_path)+1 : ]  # right: redis.yml
+        return path[len(self.app_path) + 1:]  # right: redis.yml
 
     def _build_properties(self, content: str, type: str) -> dict:
         '''
@@ -113,14 +116,36 @@ class ZkConfigFiles(IFileListener):
         '''
         return ZkConfig(self, file)
 
+    # -------------- 配置变化监听器 --------------
+    # 添加配置变化监听器
+    def get_config_listeners(self, file: str) -> list:
+        if file not in self.config_listeners:
+            self.config_listeners[file] = []
+        return self.config_listeners[file]
+
+    # 触发配置变化监听器
+    def trigger_config_listeners(self, file: str, data: dict):
+        for l in self.get_config_listeners(file):
+            l(data)
+
+    # 添加配置变化监听器
+    def add_config_listener(self, file: str, callback):
+        self.get_config_listeners(file).append(callback)
+
+    # 删除配置变化监听器
+    def remove_config_listener(self, file: str, callback):
+        if file in self.config_listeners:
+            self.config_listeners[file].remove(callback)
+
 if __name__ == '__main__':
     # zookeeper服务地址
-    zk_host = '10.101.163.242:2181'
+    zk_host = '10.106.113.218:2181'
 
     # 实例化ZkConfigFiles, 他会从远端(zookeeper)加载配置文件, 需要3个参数: 1 zk_hosts: zookeeper服务地址 2 namespace: k8s命名空间 3 name: 当前应用名
-    files = ZkConfigFiles(zk_host, 'default', 'rpcserver') # 加载zookeeper中路径/jkcfg/default/rpcserver 下的配置文件
-    config = files.get_zk_config('redis.yml') # 加载zookeeper中路径为/jkcfg/default/rpcserver/redis.yml 的配置文件
+    files = ZkConfigFiles(zk_host, 'default', 'rpcserver')  # 加载zookeeper中路径/jkcfg/default/rpcserver 下的配置文件
+    file = 'redis.yml'
+    config = files.get_zk_config(file)  # 加载zookeeper中路径为/jkcfg/default/rpcserver/redis.yml 的配置文件
+    config.add_config_listener(lambda data: print(f"监听到配置[{file}]变更: {data}"))
     while True:
-        print(config['host']) # 读配置文件中host配置项的值
+        print(config['host'])  # 读配置文件中host配置项的值
         time.sleep(3)
-
