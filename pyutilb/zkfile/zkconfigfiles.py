@@ -1,8 +1,9 @@
 import configparser
 import json
 import time
-
+from io import StringIO
 import yaml
+from dotenv import dotenv_values
 from kazoo.client import KazooClient
 from pyutilb.zkfile.filelistener import IFileListener
 from pyutilb.zkfile.zkconfig import ZkConfig
@@ -94,7 +95,7 @@ class ZkConfigFiles(IFileListener):
 
         # 解析内容
         if type == "properties":
-            return configparser.ConfigParser().read_string(content)  # 加载 properties 文件
+            return dotenv_values(stream=StringIO(content))  # 加载 properties 文件
         if type == "yaml" or type == "yml":
             return yaml.load(content, Loader=yaml.FullLoader)  # 加载 yaml 文件
         if type == "json":

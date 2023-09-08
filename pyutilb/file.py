@@ -1,13 +1,14 @@
 import json
 import os
 import re
+from io import StringIO
 import pandas as pd
 import requests
 import yaml
-
-# 文件大小单位,相邻单位相差1024倍
+from dotenv import dotenv_values
 from jsonpath import jsonpath
 
+# 文件大小单位,相邻单位相差1024倍
 file_size_units = "BKMGT";
 
 # 文件大小单位换算为字节数
@@ -83,11 +84,23 @@ def read_yaml(yaml_file):
     txt = read_local_or_http_file(yaml_file)
     return yaml.load(txt, Loader=yaml.FullLoader)
 
-# 读yaml文件
+# 读json文件
 # :param json_file json文件，支持本地文件与http文件
 def read_json(json_file):
     txt = read_local_or_http_file(json_file)
     return json.loads(txt)
+
+# 读.env文件
+# :param env_file env文件，支持本地文件与http文件
+def read_env(env_file):
+    #return dotenv_values(env_file) # 仅支持本地文件
+    txt = read_local_or_http_file(env_file)
+    return dotenv_values(stream=StringIO(txt))
+
+# 读properties文件
+# :param properties_file properties文件，支持本地文件与http文件
+def read_properties(properties_file):
+    return read_env(properties_file)
 
 # 读csv文件
 # :param csv_file csv文件，支持本地文件与http文件
