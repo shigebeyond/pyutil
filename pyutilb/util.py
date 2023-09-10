@@ -312,6 +312,8 @@ sys_funcs = {
     'read_file': read_file,
     'read_json': read_json,
     'read_yaml': read_yaml,
+    'read_env': read_env,
+    'read_properties': read_properties,
 }
 # 自定义函数, 通过 -c 注入的外部python文件定义的函数
 custom_funs = {}
