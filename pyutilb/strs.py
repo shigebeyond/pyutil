@@ -13,6 +13,13 @@ def substr_after(str, after):
         return None
     return str[i+1:]
 
+# 获得之后的字符串
+def substr_after_last(str, after):
+    i = str.rfind(after)
+    if i == -1:
+        return None
+    return str[i+1:]
+
 # 找到第几行的位置，不包含换行符
 # 就是第几个换行符的位置+1
 def find_lines(str, nline):
