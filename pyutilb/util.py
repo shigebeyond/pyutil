@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import re
 import os
+import socket
 import sys
 import random
 import json
@@ -178,6 +179,10 @@ def get_len(var):
         return 0
     return len(items)
 
+# 获得主机名
+def hostname():
+    return socket.gethostname()
+
 # -------------------- ExcelBoot用到的系统函数 ----------------------
 # 添加sheet链接
 # https://www.cnblogs.com/pythonwl/p/14363360.html
@@ -307,6 +312,7 @@ sys_funcs = {
     'random_element': random_element,
     'incr': incr,
     'len': get_len,
+    'hostname': hostname,
     'link': link,
     'link_sheet': link_sheet,
     'read_file': read_file,
