@@ -8,6 +8,9 @@ import random
 import json
 from jsonpath import jsonpath
 import csv
+
+from pyutilb.spark_df_proxy import SparkDfProxy
+from pyutilb.strs import substr_before
 from pyutilb import ts
 from pyutilb.threadlocal import ThreadLocal
 from pyutilb.file import *
@@ -234,7 +237,7 @@ reg_func = '\$\{(' + reg_func_pure + ')\}'
 # 多级属性的正则: 如 data.msg
 reg_props = '\$\{(' + f'({reg_var_pure})(\.{reg_prop_pure})*' + ')\}'
 # df属性的正则: 如 df[name]
-reg_df_prop = '\$\{(' + f'({reg_var_pure})\[{reg_prop_pure}\]' + ')\}'
+reg_df_prop = '\$\{(' + f'({reg_var_pure})(\[{reg_prop_pure}\])+' + ')\}'
 # 所有的表达式正则
 reg_exprs = [reg_var, reg_func, reg_props, reg_df_prop]
 
@@ -285,22 +288,25 @@ def analyze_var_expr(expr):
         return jsonpath(get_vars(), '$.' + expr)[0]
 
     if '[' in expr:  # 有属性, 如 df[name]
-        return parse_df_prop(expr)
+        return parse_df_props(expr)
 
     return get_var(expr)
 
 # 解析pandas df字段表达式
-def parse_df_prop(expr):
-    mat = re.match(r'([\w\d_]+)\[(.+)\]', expr)
-    if mat == None:
+def parse_df_props(expr):
+    # 获得df变量
+    var = substr_before(expr, '[')
+    if var == None:
         raise Exception("Mismatch [] syntax: " + expr)
-
-    var = mat.group(1)  # df变量
-    prop = mat.group(2)  # 属性名
     val = get_var(var)
-    if not isinstance(val, pd.DataFrame):
+    if not isinstance(val, (pd.DataFrame, SparkDfProxy)):
         raise Exception(f"变量[{var}]值不是DataFrame: {val}")
-    return val[prop]
+    # 获得属性: 因为df是二维，因此属性一般只有2级，第1级是int，第2级是str
+    props = re.findall(rf"\[({reg_prop_pure})\]", expr)  # 属性名
+    props[0] = int(props[0])
+    for prop in props:
+        val = val[prop]
+    return val
 
 # -------------------- 函数解析与调用 ----------------------
 # 替换变量时用到的函数
@@ -457,7 +463,7 @@ def iterate_range_str(range_str, zfill_width = None):
 
 if __name__ == '__main__':
     '''
-    set_var('name', 'shi')
+    set_var('name', 'shi')`
     set_var('age', 1)
     print(parse_and_call_func('random_int(3)'))
     print(parse_and_call_func('link_sheet(目录,返回目录)'))

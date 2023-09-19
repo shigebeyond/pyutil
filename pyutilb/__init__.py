@@ -11,6 +11,7 @@ from .asyncio_apscheduler_thread import SchedulerThread
 from .atomic import AtomicInteger, AtomicStarter
 from .base_validator import BaseValidator
 from .base_extractor import BaseExtractor
+from .spark_df_proxy import SparkDfProxy
 
 __author__ = "shigebeyond"
 __version__ = "1.0.6"
@@ -35,5 +36,6 @@ __all__ = [
     "AtomicInteger",
     "AtomicStarter",
     "BaseValidator",
-    "BaseExtractor"
+    "BaseExtractor",
+    "SparkDfProxy"
 ]

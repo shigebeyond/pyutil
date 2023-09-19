@@ -52,7 +52,7 @@ class YamlBoot(object):
         self.procs = {}
         # 统计
         self.stat = Stat.start()
-        self.stat_dump = True # 是否需要输出统计结果到stat.yml，K8sBoot项目不需要
+        self.stat_dump = True # 是否需要输出统计结果到stat.yml，K8sBoot/SparkBoot项目不需要
         # 调试
         self.debug = False
 
