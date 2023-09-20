@@ -31,17 +31,19 @@ def parse_cmd(name, version):
     # 添加选项规则
     # optParser.add_option("-h", "--help", dest="help", action="store_true") # 默认自带help
     optParser.add_option('-v', '--version', dest='version', action="store_true", help = 'Show version number and quit')
-    optParser.add_option("-d", "--data", dest="data", type="string", help="set variable data, eg: a=1&b=2")
-    optParser.add_option("-D", "--dataurl", dest="dataurl", type="string", help="set variable data from yaml/json url")
-    optParser.add_option("-f", "--funs", dest="funs", type="string", help="set custom functions file, eg: cf.py")
+    optParser.add_option("-d", "--data", dest="data", type="string", help="Set variable data, eg: a=1&b=2")
+    optParser.add_option("-D", "--dataurl", dest="dataurl", type="string", help="Set variable data from yaml/json url")
+    optParser.add_option("-f", "--funs", dest="funs", type="string", help="Custom functions python file, eg: cf.py")
     # LocustBoot用到的参数
-    optParser.add_option("-l", "--locustopt", dest="locustopt", type="string", help="locust options in LocustBoot command, eg: '--headless -u 10 -r 5 -t 20s --csv=result --html=report.html'")
+    optParser.add_option("-l", "--locustopt", dest="locustopt", type="string", help="Locust options in LocustBoot command, eg: '--headless -u 10 -r 5 -t 20s --csv=result --html=report.html'")
     # ui自动化测试项目用到的参数
-    optParser.add_option("-c", "--autoclose", dest="autoclose", action="store_true", help="auto close when finish or exception")
+    optParser.add_option("-c", "--autoclose", dest="autoclose", action="store_true", help="Auto close when finish or exception")
     # MonitorBoot用到的参数
     optParser.add_option("-t", "--runtime", dest="runtime", type="int", help="Stop after the specified amount of seconds")
-    # K8sBoot用到的参数
-    optParser.add_option("-o", "--output", dest="output", type="string", help="K8s file save directory")
+    # K8sBoot/SparkBoot用到的参数
+    optParser.add_option("-o", "--output", dest="output", type="string", help="Output directory for K8sBoot/SparkBoot generate file")
+    # SparkBoot用到的参数
+    optParser.add_option("-u", "--udf", dest="udf", type="string", help="Udf python file")
 
     # 解析选项
     option, args = optParser.parse_args(args)
