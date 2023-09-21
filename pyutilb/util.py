@@ -8,7 +8,7 @@ import random
 import json
 from jsonpath import jsonpath
 import csv
-
+from functools import wraps
 from pyutilb.spark_df_proxy import SparkDfProxy
 from pyutilb.strs import substr_before
 from pyutilb import ts
@@ -199,6 +199,15 @@ def link(label, url):
     return f'=HYPERLINK("{url}", "{label}")'
 
 # -------------------- 表达式解析与执行 ----------------------
+# 函数注解: 在动作函数参数上进行变量替换，这样支持参数类型为str或dict或list等
+def replace_var_on_params(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        args = [replace_var(arg, False) for arg in args]
+        result = func(self, *args, **kwargs)
+        return result
+    return wrapper
+
 # 替换变量： 将 $变量名 或 ${变量表达式} 替换为 变量值
 # :param txt 兼容基础类型+字符串+列表+字典等类型, 如果是字符串, 则是带变量的表达式
 # :param to_str 是否转为字符串, 否则原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量; 只针对整体匹配的情况
