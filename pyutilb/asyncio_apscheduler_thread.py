@@ -29,15 +29,19 @@ class SchedulerThread(EventLoopThread):
         self.scheduler.start()
 
     # 添加定时作业
-    def add_cron_job(self, cron, func, args=None, kwargs=None, id=None, name=None):
+    def add_job(self, func, trigger=None, args=None, kwargs=None, id=None, name=None, **trigger_args):
         # 1 递延创建与启动线程
         self.thread_starter.start_once(self._start_thread)
 
         # 2 添加定时作业
+        return self.scheduler.add_job(func, trigger, args=args, kwargs=kwargs, id=id, name=name, **trigger_args)
+
+    # 添加定时作业
+    def add_cron_job(self, cron, func, args=None, kwargs=None, id=None, name=None):
         # 解析cron表达式成trigger参数
         trigger_args = self.parse_cron_expr(cron)
         # 添加作业
-        return self.scheduler.add_job(func, 'cron', args=args, kwargs=kwargs, id=id, name=name, **trigger_args)
+        return self.add_job(func, 'cron', args=args, kwargs=kwargs, id=id, name=name, **trigger_args)
 
     # 调整作业的定时trigger
     def reschedule_cron_job(self, job_id, cron):
