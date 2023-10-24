@@ -9,6 +9,7 @@ import json
 from jsonpath import jsonpath
 import csv
 from functools import wraps
+from pyutilb.template import *
 from pyutilb.spark_df_proxy import SparkDfProxy
 from pyutilb.strs import substr_before
 from pyutilb import ts
@@ -335,6 +336,8 @@ sys_funcs = {
     'read_yaml': read_yaml,
     'read_env': read_env,
     'read_properties': read_properties,
+    'render_text': lambda txt: render_text(txt, get_vars()), # 取 set_vars()设置的变量作为模板参数
+    'render_file': lambda file: render_file(file, get_vars()),
 }
 # 自定义函数, 通过 -c 注入的外部python文件定义的函数
 custom_funs = {}
