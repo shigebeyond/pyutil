@@ -252,3 +252,14 @@ while True:
     print(config['host'])  # 读配置文件中host配置项的值
     time.sleep(3)
 ```
+
+## 11. template: 渲染模板
+```python
+from pyutilb.template import *
+
+tpl = '<title>${title}</title>'
+print(render_text(tpl, {'title': 'hero'}))
+
+file = '/root/test.html'
+print(render_file(file, {'title': 'hero'}))
+```
