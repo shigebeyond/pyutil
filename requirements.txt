@@ -8,3 +8,4 @@ pandas >= 1.1.5
 APScheduler == 3.10.1
 kazoo == 2.9.0
 python-dotenv == 0.20.0
+Mako == 1.1.6

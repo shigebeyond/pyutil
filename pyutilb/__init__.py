@@ -1,4 +1,5 @@
 from . import util
+from . import template
 from . import cmd
 from . import log
 from . import lazy
@@ -22,6 +23,7 @@ __all__ = [
     "__version__",
     "__description__",
     "util",
+    "template",
     "cmd",
     "log",
     "lazy",
