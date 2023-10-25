@@ -7,6 +7,8 @@ def render_mako(vars = None, **args):
     :param args: mako Template构造函数参数
     :return:
     '''
+    if vars is None:
+        vars = {}
     # 定义模板
     mytemplate = Template(**args)
     # 渲染模板
