@@ -2,6 +2,7 @@ import logging
 import logging.config
 import concurrent.futures
 import time
+from pyutilb.lazy import lazyproperty
 from configparser import ConfigParser
 import platform
 
@@ -29,13 +30,16 @@ class AsyncLogger(object):
     def executor():
         if AsyncLogger._executor == None:  # 延迟创建
             AsyncLogger._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-            load_log_conf() # 延迟加载log配置
         return AsyncLogger._executor
 
     def __init__(self, name):
-        # 获得被代理的logger
-        logger = logging.getLogger(name)
-        self.logger = logger
+        self.name = name
+
+    # 延迟获得被代理的logger => 延迟加载log配置 => 延迟创建日志文件
+    @lazyproperty
+    def logger(self):
+        load_log_conf()  # 延迟加载log配置
+        return logging.getLogger(self.name)
 
     # 设置日志等级
     def setLevel(self, level):
