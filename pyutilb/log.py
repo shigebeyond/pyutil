@@ -14,9 +14,10 @@ if platform.system().lower() == 'windows':
         return read1(self, filenames, encoding)
     ConfigParser.read = read2
 
-# 应用log的默认配置
-conf_file = __file__.replace("log.py", "logging.conf")
-logging.config.fileConfig(conf_file)
+# 加载并应用log的默认配置，延迟调用，防止没有打日志却创建了日志文件(如k8scmd库)
+def load_log_conf():
+    conf_file = __file__.replace("log.py", "logging.conf")
+    logging.config.fileConfig(conf_file)
 
 # 异步日志
 class AsyncLogger(object):
@@ -28,6 +29,7 @@ class AsyncLogger(object):
     def executor():
         if AsyncLogger._executor == None:  # 延迟创建
             AsyncLogger._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+            load_log_conf() # 延迟加载log配置
         return AsyncLogger._executor
 
     def __init__(self, name):

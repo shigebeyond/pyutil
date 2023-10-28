@@ -11,7 +11,6 @@ import yaml
 from optparse import OptionParser
 from pyutilb.module_loader import load_module_funs
 from pyutilb.file import read_http_file, read_vars
-from pyutilb.log import log
 from pyutilb.file import read_http_file
 from pyutilb.log import log
 from pyutilb.strs import substr_after_lines
