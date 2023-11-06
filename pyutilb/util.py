@@ -254,7 +254,12 @@ reg_exprs = [reg_var, reg_func, reg_props, reg_df_prop]
 # re正则匹配替换纯变量表达式
 # https://cloud.tencent.com/developer/article/1774589
 def replace_pure_var_expr(match, to_str = True) -> str:
-    r = analyze_var_expr(match.group(1))
+    expr = match.group(1)
+    # 数字(如$1)则原样返回
+    if expr.isnumeric():
+        return match.group()
+    # 解析变量表达式
+    r = analyze_var_expr(expr)
     if to_str: # 转字符串
         return str(r)
     return r # 原样返回, 可能是int/dict之类的, 主要是使用post动作的data是dict变量
