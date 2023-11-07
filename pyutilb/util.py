@@ -480,7 +480,7 @@ def iterate_range_str(range_str, zfill_width = None):
 
 if __name__ == '__main__':
     '''
-    set_var('name', 'shi')`
+    set_var('name', 'shi')
     set_var('age', 1)
     print(parse_and_call_func('random_int(3)'))
     print(parse_and_call_func('link_sheet(目录,返回目录)'))

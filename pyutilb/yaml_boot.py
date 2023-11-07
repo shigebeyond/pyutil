@@ -212,21 +212,17 @@ class YamlBoot(object):
         if action[0] == '~':  # 定义过程
             action = f"proc({action[1:]})"
 
-        has_other_arg = '(' in action # 是否有其他参数
-        if has_other_arg: # 解析其他参数
-            action, params = parse_func(action)
-            n = params
-            if len(params) == 1:
-                n = params[0]
+        # 解析其他参数
+        args = []
+        if '(' in action:
+            action, args = parse_func(action)
+
         if action not in self.actions:
             raise Exception(f'Invalid action: [{action}]')
 
         # 调用动作对应的函数
         func = self.actions[action]
-        if has_other_arg: # 其他参数: 多加了个参数，如循环变量n
-            return func(param, n)
-        else:
-            return func(param)
+        return func(param, *args)
 
     # --------- 动作处理的函数 --------
     # 设置调试模式
