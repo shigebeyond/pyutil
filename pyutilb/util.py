@@ -6,6 +6,7 @@ import socket
 import sys
 import random
 import json
+from collections import deque
 from jsonpath import jsonpath
 import csv
 from functools import wraps
@@ -85,14 +86,47 @@ def extend_list(list, n, val = None):
         list.append(val)
 
 # -------------------- 变量读写+表达式解析与执行 ----------------------
-# 变量: vars
-vars = ThreadLocal(lambda : {})
+# 变量栈
+vars_stacks = ThreadLocal(lambda : deque())
 
 # 获取全部变量
 def get_vars(copy = False):
-    ret = vars.get()
+    # 获得变量栈
+    stack = vars_stacks.get()
+    # 获得栈顶元素=变量
+    if len(stack) == 0: # 空则插入一个
+        stack.append({})
+    ret = stack[-1]
     if copy:
         return ret.copy()
+    return ret
+
+# 变量栈入栈
+def push_vars_stack():
+    # 获得变量栈
+    stack = vars_stacks.get()
+    # 复制栈顶元素=变量，因此boot框架需要访问所有设置过的变量
+    if len(stack) == 0:
+        vars = {}
+    else:
+        vars = stack[-1].copy()
+    # 入栈
+    stack.append(vars)
+
+# 变量栈出栈
+def pop_vars_stack():
+    # 获得变量栈
+    stack = vars_stacks.get()
+    if len(stack) == 0:
+        return None
+    # 出栈
+    ret = stack.pop()
+    # 回写上一层的变量
+    if len(stack) > 0:
+        vars = stack[-1]
+        for k in vars.keys():
+            if vars[k] != ret[k]:
+                vars[k] = ret[k]
     return ret
 
 # 获取单个变量
@@ -233,16 +267,16 @@ def replace_var(txt, to_str = True):
     return do_replace_var(txt, to_str)
 
 # 中文正则: \u4e00-\u9fa5
-# 属性正则
-reg_prop_pure = '[\w\d_\u4e00-\u9fa5]+'
-# 变量的正则
-reg_var_pure = '[\w\d_]+'
+# 属性正则, 注: ArgoFlowBoot属性名支持用@开头
+reg_prop_pure = '@?[\w\d_\u4e00-\u9fa5]+'
+# 变量的正则, 注: ArgoFlowBoot变量名支持用@开头
+reg_var_pure = '@?[\w\d_-]+'
 # 简单变量, 如 $xxx
 reg_var = f'\$({reg_var_pure})'
 # 表达式正则: 需兼容 random_str(1) / data.msg / df[name]
 # reg_expr = '\$\{([\w\d_,\.\(\)\[\]\u4e00-\u9fa5]+)\}' # 太多情况不能匹配, 因为参数值可能各种各样字符都有
 # 函数调用的正则: 如 random_str(1)
-reg_func_pure = '([\w\d_]+)\((.*)\)'
+reg_func_pure = '([\w\d_-]+)\((.*)\)'
 reg_func = '\$\{(' + reg_func_pure + ')\}'
 # 多级属性的正则: 如 data.msg
 reg_props = '\$\{(' + f'({reg_var_pure})(\.{reg_prop_pure})*' + ')\}'
@@ -352,8 +386,17 @@ def parse_and_call_func(expr):
     func, params = parse_func(expr)
     return call_func(func, params)
 
-# 解析函数与参数
-def parse_func(expr):
+'''
+解析函数与参数
+:param expr 函数表达式，如 xxx(1,a)
+:param allow_no_bracket 是否允许无括号，如xxx
+'''
+def parse_func(expr, allow_no_bracket = False):
+    # 无括号: 整个表达式就是函数名
+    if '(' not in expr and allow_no_bracket:
+        return expr, []
+
+    # 解析函数名与参数
     mat = re.match(rf'{reg_func_pure}', expr)
     if mat == None:
         raise Exception("Mismatch function call syntax: " + expr)
@@ -488,4 +531,10 @@ if __name__ == '__main__':
     print(do_replace_var('${link_sheet(目录,返回目录)}'))
     print(do_replace_var('hello, ${name}'))
     print(do_replace_var('$name'))
+    
+    # ArgoFlowBoot变量名支持用@开头
+    set_var('@test', 'b')
+    print(replace_var('a-${@test}-c'))
+    mat = re.search(rf"{reg_props}", 'read-art(${write-art.@test})')
+    print(mat)
     '''
