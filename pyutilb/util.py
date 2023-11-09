@@ -403,7 +403,10 @@ def parse_func(expr, allow_no_bracket = False):
 
     func = mat.group(1)  # 函数名
     param = mat.group(2)  # 函数参数
-    params = split_param(param)
+    if param == '' or param.isspace():
+        params = []
+    else:
+        params = split_param(param)
     return func, params
 
 # 用,分割参数
