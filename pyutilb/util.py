@@ -5,10 +5,8 @@ import os
 import socket
 import sys
 import random
-import json
 from collections import deque
-from jsonpath import jsonpath
-import csv
+from typing import Union
 from functools import wraps
 from pyutilb.template import *
 from pyutilb.spark_df_proxy import SparkDfProxy
@@ -17,7 +15,6 @@ from pyutilb import ts
 from pyutilb.threadlocal import ThreadLocal
 from pyutilb.file import *
 import pandas as pd
-import threading
 import hashlib
 
 # -------------------- 帮助方法 ----------------------
@@ -388,10 +385,18 @@ def parse_and_call_func(expr):
 
 '''
 解析函数与参数
-:param expr 函数表达式，如 xxx(1,a)
+:param expr 函数+参数 
+            str类型: 函数表达式，如 xxx(1,a)
+            list类型: 第一个是函数名, 其他为参数
 :param allow_no_bracket 是否允许无括号，如xxx
 '''
-def parse_func(expr, allow_no_bracket = False):
+def parse_func(expr: Union[str, list], allow_no_bracket = False):
+    # list类型: 第一个是函数名, 其他为参数
+    if isinstance(expr, list):
+        params = expr[1:]
+        func = expr[0]
+        return func, params
+
     # 无括号: 整个表达式就是函数名
     if '(' not in expr and allow_no_bracket:
         return expr, []
