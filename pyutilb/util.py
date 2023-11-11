@@ -265,7 +265,7 @@ def replace_var(txt, to_str = True):
 
 # 中文正则: \u4e00-\u9fa5
 # 属性正则, 注: ArgoFlowBoot属性名支持用@开头
-reg_prop_pure = '@?[\w\d_\u4e00-\u9fa5]+'
+reg_prop_pure = '@?[\w\d_-\u4e00-\u9fa5]+'
 # 变量的正则, 注: ArgoFlowBoot变量名支持用@开头
 reg_var_pure = '@?[\w\d_-]+'
 # 简单变量, 如 $xxx
