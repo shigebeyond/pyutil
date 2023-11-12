@@ -148,8 +148,14 @@ def set_vars(vals):
 
 # 清理多个变量
 def clear_vars(names):
+    # 1 无指定清理啥变量
     if not names:
         return
+    # 2 清理全部变量
+    if names == '*':
+        get_vars().clear()
+        return
+    # 3 清理指定变量
     if isinstance(names, dict):
         names = names.keys()
     for name in names:
@@ -326,17 +332,21 @@ def do_replace_var(txt, to_str = True, replace = replace_pure_var_expr):
 # :param expr 变量表达式
 # :return 表达式的值
 def analyze_var_expr(expr):
-    # 单独处理
-    if '(' in expr:  # 函数调用, 如 random_str(1)
-        return parse_and_call_func(expr)
+    try:
+        # 单独处理
+        if '(' in expr:  # 函数调用, 如 random_str(1)
+            return parse_and_call_func(expr)
 
-    if '.' in expr:  # 有多级属性, 如 data.msg
-        return jsonpath(get_vars(), '$.' + expr)[0]
+        if '.' in expr:  # 有多级属性, 如 data.msg
+            return jsonpath(get_vars(), '$.' + expr)[0]
 
-    if '[' in expr:  # 有属性, 如 df[name]
-        return parse_df_props(expr)
+        if '[' in expr:  # 有属性, 如 df[name]
+            return parse_df_props(expr)
 
-    return get_var(expr)
+        return get_var(expr)
+    except Exception as e:
+        raise ValueError(f"解析变量表达式`{expr}`出错: {e}") from e
+
 
 # 解析pandas df字段表达式
 def parse_df_props(expr):
