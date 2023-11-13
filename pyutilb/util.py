@@ -110,8 +110,11 @@ def push_vars_stack():
     # 入栈
     stack.append(vars)
 
-# 变量栈出栈
-def pop_vars_stack():
+def pop_vars_stack(write_back):
+    '''
+    变量栈出栈
+    :param write_back 回写上一层的变量，默认不回写
+    '''
     # 获得变量栈
     stack = vars_stacks.get()
     if len(stack) == 0:
@@ -119,7 +122,7 @@ def pop_vars_stack():
     # 出栈
     ret = stack.pop()
     # 回写上一层的变量
-    if len(stack) > 0:
+    if write_back and len(stack) > 0:
         vars = stack[-1]
         for k in vars.keys():
             if vars[k] != ret[k]:

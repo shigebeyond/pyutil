@@ -1,5 +1,6 @@
 import calendar
 import datetime
+import re
 import time
 
 # 今天
@@ -97,6 +98,25 @@ def str2timestamp(str, format_string="%Y-%m-%d %H:%M:%S"):
 def date_format_convert(str, format_from="%Y-%m-%d %H:%M:%S", format_to="%Y-%m-%d %H-%M-%S"):
     arr = time.strptime(str, format_from)
     return time.strftime(format_to, arr)
+
+age_unit2seconds = {
+    'y': 365*86400,
+    'mo': 30*86400,
+    'd': 86400,
+    'h': 3600,
+    'm': 60,
+    's': 1,
+}
+
+# k8s资源年龄字符串转秒数: 年（"y"）、月（"mo"）、天（"d"）、小时（"h"）、分钟（"m"）和秒（"s"）
+def age2seconds(age):
+    parts = re.findall(r'\d+\w', age)
+    ret = 0
+    for part in parts:
+        num = int(part[:-1])
+        unit = part[-1]
+        ret += num * age_unit2seconds[unit]
+    return ret
 
 if __name__ == '__main__':
     ''' 当前时间不能做参数默认值
